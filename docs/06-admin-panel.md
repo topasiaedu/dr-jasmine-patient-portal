@@ -176,14 +176,14 @@ talking without losing the flow of conversation.
 │  • Lisinopril    │          ...             │  PREVIOUS NOTES          │
 │                  │                          │                          │
 │  Chief concern:  │  Mar 25  Fasting: 6.8    │  [Mar 18] First consult  │
-│  "Weight and     │          ...             │  "Introduced LCHF diet.  │
+│  "Weight and     │          ...             │  "Introduced custom diet.│
 │   blood sugar"   │                          │   Patient motivated..."  │
 │                  │                          │  [expand]                │
 │  [Full profile]  │  [All readings →]        │                          │
 │                  │                          │                          │
 ├──────────────────┴──────────────────────────┴──────────────────────────┤
 │  GUIDE                                                                  │
-│  Low Carb High Fat Diet  ·  Last updated: Mar 18                       │
+│  Personalised Diabetes Reversal Plan  ·  Last updated: Mar 18          │
 │  [Quick edit guide]   [Open full guide builder →]                      │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
@@ -214,7 +214,8 @@ This is what the patient sees in their "Guide" tab.
 ```
 GUIDE BUILDER — Lily Tan
 
-Guide title: [Low Carb High Fat Diet          ]
+Guide title: [Personalised Diabetes Reversal Plan]
+Diet type:   [LCHF ▾]  ← dropdown: LCHF, Mediterranean, Low GI, IF, Custom
 
 ━━━ FOODS TO AVOID ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 [+ Add item]

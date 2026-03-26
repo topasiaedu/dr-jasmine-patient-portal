@@ -44,17 +44,46 @@ interface Patient {
 // ONBOARDING FORM
 // ─────────────────────────────────────────────
 
+/** Job title / occupation category from Dr. Jasmine's intake form */
+type OccupationType =
+  | "business_owner"
+  | "leader"
+  | "freelancer"
+  | "employee"
+  | "retired"
+  | "unemployed";
+
 interface OnboardingResponse {
   id: string;
   patientId: string;
-  /** Age in years */
-  age: number;
-  /** Biological sex */
-  sex: "male" | "female" | "prefer_not_to_say";
-  /** Race / ethnicity — free text to accommodate all nationalities */
-  race: string;
-  /** Occupation — free text */
-  occupation: string;
+
+  /* ── Administrative fields (from Dr. Jasmine's intake form) ── */
+
+  /** IC number (xxxxxx-xx-xxxx) or passport number */
+  icOrPassport: string;
+  /** Gender as per intake form */
+  gender: "male" | "female";
+  /** Contact phone number */
+  contactNumber: string;
+  /** Email address */
+  email: string;
+  /** Home address — free text */
+  homeAddress: string;
+  /** Current job title / occupation category */
+  occupation: OccupationType;
+  /** Emergency contact — name and phone number as a single string */
+  emergencyContact: string;
+  /** Who referred this patient — free text, optional */
+  referredBy: string;
+  /** Full name of the person paying for the programme */
+  payerFullName: string;
+  /** Whether patient agreed to programme terms & conditions */
+  agreedToTerms: boolean;
+  /** Whether patient agreed to testimonial / photo-video usage */
+  agreedToTestimonial: boolean;
+
+  /* ── Medical fields (for admin consultation panel) ── */
+
   /** Primary health concerns or reason for consultation — free text */
   chiefComplaint: string;
   /** List of known diagnosed medical conditions */
@@ -65,6 +94,9 @@ interface OnboardingResponse {
   allergies: string[];
   /** Family history notes — free text */
   familyHistory: string;
+
+  /* ── Lifestyle fields (for admin consultation panel) ── */
+
   /** Smoking status */
   smokingStatus: "never" | "former" | "current";
   /** Alcohol consumption */
@@ -75,10 +107,7 @@ interface OnboardingResponse {
   dietaryNotes: string;
   /** Any additional notes the patient wants Dr. Jasmine to know — free text */
   additionalNotes: string;
-  /** Name of emergency contact */
-  emergencyContactName: string;
-  /** Phone number of emergency contact (E.164 format) */
-  emergencyContactPhone: string;
+
   /** ISO 8601 datetime of submission */
   submittedAt: string;
 }
@@ -302,22 +331,40 @@ create table patients (
 create table onboarding_responses (
   id                      uuid primary key default gen_random_uuid(),
   patient_id              uuid not null references patients(id) on delete cascade,
-  age                     integer not null check (age > 0 and age < 130),
-  sex                     text not null check (sex in ('male', 'female', 'prefer_not_to_say')),
-  race                    text not null,
-  occupation              text not null default '',
-  chief_complaint         text not null,
+
+  -- Administrative fields (from Dr. Jasmine's intake form)
+  ic_or_passport          text not null,
+  gender                  text not null check (gender in ('male', 'female')),
+  contact_number          text not null,
+  email                   text not null,
+  home_address            text not null,
+  occupation              text not null check (occupation in (
+                            'business_owner', 'leader', 'freelancer',
+                            'employee', 'retired', 'unemployed'
+                          )),
+  emergency_contact       text not null,
+  referred_by             text not null default '',
+  payer_full_name         text not null,
+  agreed_to_terms         boolean not null default false,
+  agreed_to_testimonial   boolean not null default false,
+
+  -- Medical fields (for admin consultation panel)
+  chief_complaint         text not null default '',
   existing_conditions     text[] not null default '{}',
   current_medications     text[] not null default '{}',
   allergies               text[] not null default '{}',
   family_history          text not null default '',
-  smoking_status          text not null check (smoking_status in ('never', 'former', 'current')),
-  alcohol_use             text not null check (alcohol_use in ('none', 'occasional', 'moderate', 'frequent')),
-  activity_level          text not null check (activity_level in ('sedentary', 'light', 'moderate', 'active')),
+
+  -- Lifestyle fields (for admin consultation panel)
+  smoking_status          text not null default 'never'
+                          check (smoking_status in ('never', 'former', 'current')),
+  alcohol_use             text not null default 'none'
+                          check (alcohol_use in ('none', 'occasional', 'moderate', 'frequent')),
+  activity_level          text not null default 'sedentary'
+                          check (activity_level in ('sedentary', 'light', 'moderate', 'active')),
   dietary_notes           text not null default '',
   additional_notes        text not null default '',
-  emergency_contact_name  text not null,
-  emergency_contact_phone text not null,
+
   submitted_at            timestamptz not null default now()
 );
 

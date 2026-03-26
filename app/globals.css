@@ -1,0 +1,102 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Display font variable */
+    --font-display: "DM Serif Display", serif;
+
+    /* Warm ivory background */
+    --background: 40 33% 97%; /* #FAF8F5 */
+    --foreground: 20 12% 10%; /* #1C1917 stone-900 */
+    --card: 0 0% 100%;
+    --card-foreground: 20 12% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 12% 10%;
+    /* Deep forest primary (#2D5E4C) */
+    --primary: 155 35% 27%;
+    --primary-foreground: 0 0% 100%;
+    /* Warm secondary (#EDE8E1) */
+    --secondary: 33 22% 91%;
+    --secondary-foreground: 25 10% 25%; /* #44403C stone-700 */
+    --muted: 30 29% 92%;
+    --muted-foreground: 25 6% 46%; /* #78716C stone-500 */
+    /* Warm gold accent (#B8860B) */
+    --accent: 43 90% 38%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 51%; /* #DC2626 */
+    --destructive-foreground: 0 0% 100%;
+    /* Warm border (#E5DFD8) */
+    --border: 33 15% 87%;
+    --input: 33 15% 87%;
+    --ring: 155 35% 27%; /* same as primary */
+    --radius: 0.75rem; /* 12px base */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  *:focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  /* Core colour utilities */
+  .text-main {
+    color: #1c1917;
+  }
+  .bg-app {
+    background-color: #faf8f5;
+  }
+  .text-secondary {
+    color: #78716c;
+  }
+  /* New utilities */
+  .bg-depth {
+    background-color: #ede8e1;
+  }
+  .text-tertiary {
+    color: #a8a29e;
+  }
+  .font-display {
+    font-family: var(--font-display);
+  }
+}
+
+/* ── Page transition fade-in ── */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-in {
+  animation: fadeIn 200ms ease-out;
+}
+
+/* ── Camera scanning animation for log page ── */
+@keyframes scanning {
+  0% {
+    top: 0%;
+  }
+  50% {
+    top: 100%;
+  }
+  100% {
+    top: 0%;
+  }
+}
+.animate-scanning {
+  animation: scanning 2s linear infinite;
+}

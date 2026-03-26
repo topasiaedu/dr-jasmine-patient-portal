@@ -1,4 +1,10 @@
-# Demo App — Agent Implementation Prompts
+# Demo App — Agent Implementation Prompts (Original Build — Completed)
+
+> **STATUS: COMPLETED** — These 9 agent prompts built the initial demo app.
+> All have been executed. For current work, see the `docs/` folder:
+> - **Design overhaul prompts:** [`docs/12-design-implementation-prompts.md`](./docs/12-design-implementation-prompts.md)
+> - **UX audit & improvements:** [`docs/10-ux-audit-improvements.md`](./docs/10-ux-audit-improvements.md)
+> - **Design system:** [`docs/08-ui-ux.md`](./docs/08-ui-ux.md)
 
 Run these prompts **in order**, one agent at a time. Each agent builds on the previous.
 Pass the relevant prompt in full to each agent session.

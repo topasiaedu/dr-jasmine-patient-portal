@@ -38,8 +38,11 @@ No UI. Pure logic:
 
 ### Onboarding Form `/p/[id]/onboarding`
 
-**Purpose:** Collect the patient's medical and personal background before their
-first consultation. Dr. Jasmine references these answers during the consultation.
+**Purpose:** Collect the patient's personal, medical, and lifestyle background before
+their first consultation. Dr. Jasmine references these answers during the consultation.
+
+**Source:** This form combines Dr. Jasmine's official intake form (administrative fields)
+with medical/lifestyle fields needed for the admin consultation panel.
 
 **UX pattern:** Stepped form — one question group per screen. Progress bar at the top.
 Back and Next buttons at the bottom (full width, 56px height minimum).
@@ -47,31 +50,43 @@ Back and Next buttons at the bottom (full width, 56px height minimum).
 **Steps:**
 
 ```
-Step 1 — Personal Details
-  • Full name (pre-filled from GHL contact if available)
-  • Age
-  • Sex (radio buttons, large tap targets)
-  • Race / ethnicity
+Step 1 — Personal Details (from Dr. Jasmine's intake form)
+  • Full name / 病患的全名 (pre-filled from GHL contact if available)
+  • IC Number (xxxxxx-xx-xxxx) or Passport Number / 身份证/护照号码
+  • Gender / 性别 (radio: Male 男 / Female 女)
+  • Contact Number / 联络号码
+  • Email / 电邮
+  • Home Address / 住家地址
 
-Step 2 — Health Background
+Step 2 — Occupation & Contacts (from Dr. Jasmine's intake form)
+  • Occupation / 职业 — Current Job Title / 目前职位
+    (radio: Business Owner 企业家/老板 / Leader 领导 / Freelancer 自由业 /
+     Employee 打工族 / Retired 退休 / Unemployed 暂时没有工作)
+  • Emergency Contact (Name & Phone) / 紧急联络人（姓名和电话号码）
+  • Referred By / 介绍人 (optional)
+  • Payer Full Name / 付款人全名
+
+Step 3 — Health Background (for admin consultation panel)
   • Chief complaint / reason for seeing Dr. Jasmine (textarea)
   • Existing medical conditions (multi-select tags + free text option)
   • Current medications (add items one by one)
   • Known allergies (add items one by one)
 
-Step 3 — Lifestyle
+Step 4 — Lifestyle (for admin consultation panel)
   • Smoking status (radio: Never / Former / Current)
   • Alcohol use (radio: None / Occasional / Moderate / Frequent)
   • Activity level (radio: Sedentary / Light / Moderate / Active)
   • Dietary notes (textarea — any restrictions, preferences)
-
-Step 4 — Family History & Additional Notes
   • Family history (textarea)
   • Anything else for Dr. Jasmine to know (textarea)
 
-Step 5 — Emergency Contact
-  • Emergency contact name
-  • Emergency contact phone number
+Step 5 — Terms & Conditions
+  • Programme T&C agreement (required) — includes link to PDF:
+    https://drive.google.com/file/d/1rSxdxzg3AkhONK0XuNxewY1R1Sa_j759/view
+    Must check "Yes, I agree / 是的，我同意" to proceed.
+  • Testimonial / LE agreement (required selection, can decline) —
+    Permission for Metanova Health to use photos/videos on social media.
+    Options: "Yes, I agree / 是的，我同意" or "No, I disagree / 不，我不同意"
 
 Step 6 — Review & Submit
   • Summary of all answers (read-only, collapsible sections)
@@ -85,10 +100,16 @@ Step 6 — Review & Submit
 - Redirects to `/p/[id]/book`
 
 **Validation:**
-- Full name, age, sex, chief complaint, emergency contact name + phone are required
-- All other fields are optional but encouraged
-- Age must be a positive integer less than 130
+- Full name, IC/passport, gender, contact number, email, address are required
+- Occupation, emergency contact, payer name are required
+- Chief complaint is required (medical context)
+- Programme T&C must be agreed to
+- Testimonial agreement requires a selection (yes or no) but either is acceptable
+- All lifestyle and medical history fields are optional but encouraged
 - Phone numbers accept any format (no strict E.164 enforcement on the form)
+
+**Bilingual note:** All form labels display both English and Chinese text as shown
+in Dr. Jasmine's original intake form. This applies to steps 1, 2, and 5.
 
 ---
 
@@ -96,14 +117,19 @@ Step 6 — Review & Submit
 
 **Purpose:** Book the first consultation with Dr. Jasmine.
 
-**UX:** Cal.com booking widget embedded inline (not a modal, not a new tab).
-The widget is styled to match the portal's colour palette via Cal.com's
+**Production UX:** Cal.com booking widget embedded inline (not a modal, not a
+new tab). The widget is styled to match the portal's colour palette via Cal.com's
 embed theming options.
+
+**Demo UX (current):** A custom date and time slot picker replaces the Cal.com
+embed. The patient selects a date from a scrollable calendar and picks a time
+slot from a grid. This stores the booking in `localStorage` and redirects to
+the pending page.
 
 Above the widget: a short friendly message —
 > "Almost there! Pick a time that works for you."
 
-After booking is confirmed by Cal.com:
+**Production flow (after Cal.com integration):**
 - Cal.com webhook fires
 - Backend saves appointment to Supabase, GHL enrolls contact in booking workflow
 - Patient is redirected to `/p/[id]/pending`
@@ -148,7 +174,8 @@ This prevents patients from accidentally joining at the wrong time.
 
 **Layout:**
 ```
-Good morning, Lily 👋             ← personalised greeting, time-aware
+Good morning,                     ← Plus Jakarta Sans, secondary colour
+Lily                              ← DM Serif Display, large, primary colour
 
 ┌─────────────────────────────────┐
 │  TODAY'S TASK                   │
@@ -305,7 +332,7 @@ also export it as a PDF.
 YOUR GUIDE FROM DR. JASMINE
 Last updated: March 2026
 
-[LOW CARB HIGH FAT DIET]        ← guide title
+[Personalised Diabetes Reversal Plan]        ← guide title (varies per patient)
 
 ━━━ FOODS TO AVOID ━━━━━━━━━━━━━━━
 (Red section)

@@ -1,5 +1,17 @@
 # 09 — Build Phases
 
+## Current State: Demo Build Complete
+
+The app is currently a **full-scope demo** — every patient flow and admin page
+is built using `localStorage` and mock data. No backend services are connected.
+This is equivalent to completing the UI layer for Phases 1–3 + most of Phase 4a,
+without any Supabase, Cal.com, GHL, or OpenAI integration.
+
+**Next milestone before backend integration:** Design overhaul (see
+`08-ui-ux.md` and `12-design-implementation-prompts.md`).
+
+---
+
 ## Phasing Philosophy
 
 Build in the order of what delivers value to Dr. Jasmine earliest. The goal is to

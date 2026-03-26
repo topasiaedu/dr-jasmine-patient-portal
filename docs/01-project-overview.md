@@ -117,9 +117,36 @@ authentication through Supabase Auth.
 ## Business Context
 
 - **Company:** Metanova Health Sdn Bhd
-- **Practice type:** Private GP / metabolic health
+- **Practice type:** Private GP / metabolic health, specialising in **diabetes reversal**
+  through personalised dietary and lifestyle interventions (LCHF, Mediterranean,
+  intermittent fasting, low GI, and other evidence-based protocols)
 - **Current pain points:**
   - Patients lose or misplace printed dietary guides and homework sheets
   - No automated reminders; relies on manual follow-up
   - No centralised view of a patient's progress over time
   - Onboarding forms are paper-based and hard to reference during consultations
+
+---
+
+## Current Build State
+
+The app is in **demo build** — a fully functional frontend using localStorage
+and mock data in place of live backend services. This allows Dr. Jasmine to
+preview the full patient journey and admin experience before backend integration.
+
+**What is live:**
+- All patient portal pages (onboarding, booking, pending, home, log, guide, FAQ)
+- All admin panel pages (login, dashboard, patients list, patient profile, schedule)
+- Patient flows use `localStorage` for state (demo_patient_status, demo_onboarding_draft, etc.)
+- Admin auth uses `localStorage` key "admin_auth" (not Supabase Auth yet)
+- Mock data in `lib/mock-data.ts` provides realistic demo content
+
+**What uses placeholders / mock data:**
+- No Supabase database connected — all data is from mock-data.ts or localStorage
+- No Cal.com embed — booking page uses a custom date/time picker for demo
+- No GHL integration — no WhatsApp reminders
+- No OpenAI Vision — photo path has a scanning animation stub
+- No Zoom — "Join on Zoom" button is present but disabled
+
+**Next milestone:** Design overhaul (documented in `08-ui-ux.md` and
+`12-design-implementation-prompts.md`), then backend integration.
