@@ -26,8 +26,45 @@ import {
   MessageSquare
 } from "lucide-react";
 import { Camera, PenLine } from "lucide-react";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, isValid } from "date-fns";
+// parseISO is used inside safeFormat — kept as a named import
 import { Button } from "@/components/ui/button";
+
+/**
+ * Safely parse and format an ISO date string.
+ * Returns the fallback string if the value is missing or not a valid date,
+ * preventing RangeError crashes from stale / malformed localStorage entries.
+ */
+function safeFormat(
+  dateStr: string | undefined | null,
+  formatStr: string,
+  fallback = "—"
+): string {
+  if (!dateStr) return fallback;
+  try {
+    const d = parseISO(dateStr);
+    return isValid(d) ? format(d, formatStr) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+/**
+ * Return true only if the reading object has every field the UI depends on.
+ * Filters out entries saved by older versions of the log page.
+ */
+function isValidReading(r: unknown): r is DailyReading {
+  if (!r || typeof r !== "object") return false;
+  const obj = r as Record<string, unknown>;
+  return (
+    typeof obj.id === "string" &&
+    typeof obj.readingDate === "string" &&
+    typeof obj.fastingBloodSugar === "number" &&
+    typeof obj.bloodPressureSystolic === "number" &&
+    typeof obj.bloodPressureDiastolic === "number" &&
+    typeof obj.weightKg === "number"
+  );
+}
 
 export default function AdminPatientProfilePage() {
   const router = useRouter();
@@ -44,9 +81,15 @@ export default function AdminPatientProfilePage() {
     const localReadings = localStorage.getItem("demo_readings_history");
     if (localReadings) {
       try {
-        setReadings(JSON.parse(localReadings));
+        const parsed: unknown = JSON.parse(localReadings);
+        if (Array.isArray(parsed)) {
+          // Discard any entries that don't match the expected shape so stale
+          // data from older demo versions never crashes the page.
+          const valid = parsed.filter(isValidReading);
+          if (valid.length > 0) setReadings(valid);
+        }
       } catch (e: unknown) {
-        console.error("Failed to parse localStorage:", e);
+        console.error("Failed to parse demo_readings_history:", e);
       }
     }
   }, [router]);
@@ -144,7 +187,7 @@ export default function AdminPatientProfilePage() {
                       <div className="flex justify-between items-start mb-1">
                         <p className="font-semibold text-main text-[15px]">{formatTimelineTitle(evt)}</p>
                         <span className="text-xs text-secondary font-medium whitespace-nowrap ml-4">
-                          {format(parseISO(evt.occurredAt), "d MMM, h:mm a")}
+                          {safeFormat(evt.occurredAt, "d MMM, h:mm a")}
                         </span>
                       </div>
                       
@@ -203,7 +246,7 @@ export default function AdminPatientProfilePage() {
                   return (
                     <div key={rdg.id} className={`p-4 rounded-xl border ${isHighAlert ? 'bg-red-50/50 border-red-100' : 'bg-gray-50 border-gray-100'} flex justify-between items-center`}>
                       <div>
-                        <p className="text-sm font-bold text-main">{format(parseISO(rdg.readingDate), "EEE, d MMM")}</p>
+                        <p className="text-sm font-bold text-main">{safeFormat(rdg.readingDate, "EEE, d MMM")}</p>
                         <div className="flex gap-3 text-xs text-secondary mt-1 font-medium">
                           <span className={rdg.fastingBloodSugar > 7.0 ? "text-danger" : ""}>FBS {rdg.fastingBloodSugar}</span>
                           <span>&middot;</span>

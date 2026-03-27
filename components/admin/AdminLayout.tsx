@@ -71,11 +71,17 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
   );
 }
 
+interface AdminLayoutProps {
+  children: React.ReactNode;
+  /** When true, removes padding and max-width for full-bleed workspace pages. */
+  fullBleed?: boolean;
+}
+
 /**
  * Admin layout — warm near-black sidebar + warm ivory content area.
  * Desktop: fixed sidebar; Mobile: hamburger drawer.
  */
-export function AdminLayout({ children }: { children: React.ReactNode }) {
+export function AdminLayout({ children, fullBleed = false }: AdminLayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -127,8 +133,16 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Main Content Area — warm ivory background */}
-      <main id="main-content" className="flex-1 md:pl-60 pb-10 bg-bg-main border-l border-border">
-        <div className="p-4 md:p-8 max-w-6xl mx-auto">{children}</div>
+      <main
+        id="main-content"
+        className={cn(
+          "flex-1 md:pl-60 bg-bg-main border-l border-border",
+          fullBleed ? "" : "pb-10"
+        )}
+      >
+        <div className={fullBleed ? "" : "p-4 md:p-8 max-w-6xl mx-auto"}>
+          {children}
+        </div>
       </main>
     </div>
   );
