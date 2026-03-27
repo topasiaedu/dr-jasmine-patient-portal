@@ -204,6 +204,196 @@ export const MOCK_GUIDE: PatientGuide = {
   updatedAt: "2026-03-25T10:00:00Z"
 };
 
+/**
+ * Five consultation guides issued after each session with Dr. Jasmine.
+ * Index 0 = earliest (Consultation 1), index 4 = latest (Consultation 5).
+ * The last entry mirrors MOCK_GUIDE content with the most refined plan.
+ */
+export const MOCK_CONSULTATION_GUIDES: PatientGuide[] = [
+  {
+    id: "guide-c1",
+    patientId: "demo",
+    title: "Initial LCHF Introduction Plan",
+    dietType: "LCHF",
+    noList: [
+      "White Rice", "Brown Rice", "Noodles", "Bread", "Biscuits", "Cakes",
+      "White Sugar", "Brown Sugar", "Honey", "All fruits",
+      "Milk", "Fruit Juices", "Soft Drinks"
+    ],
+    yesCategories: [
+      { name: "Meat", items: ["Chicken", "Fish", "Pork", "Beef"], notes: ["Moderate portions to start"] },
+      { name: "Eggs", items: ["Chicken Eggs"], notes: ["Up to 3 per day"] },
+      { name: "Vegetables", items: ["Leafy greens", "Mushrooms", "Beans"], notes: ["Prioritise above-ground vegetables"] }
+    ],
+    snacks: ["Nuts (almonds, walnuts)", "Avocados", "Hard-boiled eggs"],
+    replacements: [
+      { original: "Rice", replacement: "Cauliflower rice" },
+      { original: "Noodles", replacement: "Konjac noodles" }
+    ],
+    portions: [
+      { label: "Meat", fraction: "1/2" },
+      { label: "Vegetables", fraction: "1/2" }
+    ],
+    cookingMethods: ["Steamed", "Boiled", "Pan-fried", "Grilled"],
+    additionalSections: [
+      { title: "Week 1 Goal", content: "Focus on eliminating rice and sugary drinks first. Do not try to change everything at once." },
+      { title: "Disclaimer", content: "Metanova Health Disclaimer: This plan is part of Dr. Jasmine's diabetes reversal programme and is personalised for you. It should not be construed as medical advice." }
+    ],
+    updatedAt: "2026-01-14T10:00:00Z"
+  },
+  {
+    id: "guide-c2",
+    patientId: "demo",
+    title: "Phase 2 — Stricter Carb Removal",
+    dietType: "LCHF",
+    noList: [
+      "White Rice", "Brown Rice", "Basmati Rice", "Mee Hoon", "Noodles",
+      "Bread", "Biscuits", "Cakes", "White Sugar", "Brown Sugar", "Honey",
+      "All fruits (except berries)", "Milk", "Fruit Juices", "Soft Drinks"
+    ],
+    yesCategories: [
+      { name: "Meat", items: ["Pork", "Beef", "Chicken", "Fish", "Prawns"], notes: ["Fatty cuts are fine"] },
+      { name: "Eggs", items: ["Chicken Eggs", "Duck Eggs"], notes: ["No limit per day"] },
+      { name: "Tofu/Tempe", items: ["Tofu", "Tempe"], notes: [] },
+      { name: "Vegetables", items: ["Leafy greens", "Beans", "Mushrooms", "Carrot", "Garlic", "Onion"], notes: ["Unlimited leafy greens"] }
+    ],
+    snacks: ["Avocados", "Strawberries", "Blueberries", "Almonds", "Walnuts", "Cheese"],
+    replacements: [
+      { original: "Rice", replacement: "Cauliflower rice or konjac rice" },
+      { original: "Noodles", replacement: "Konjac noodles" },
+      { original: "Milk", replacement: "Almond milk or coconut milk" }
+    ],
+    portions: [
+      { label: "Meat", fraction: "1/2" },
+      { label: "Eggs or Tofu", fraction: "1/4" },
+      { label: "Vegetables", fraction: "1/4" }
+    ],
+    cookingMethods: ["Pan-fried", "Steamed", "Grilled", "Boiled", "Stewed"],
+    additionalSections: [
+      { title: "Progress Note", content: "Fasting sugar improved by 0.4 mmol/L since last visit. Continue reducing carbs and increase fat intake for satiety." },
+      { title: "Disclaimer", content: "Metanova Health Disclaimer: This plan is part of Dr. Jasmine's diabetes reversal programme and is personalised for you. It should not be construed as medical advice." }
+    ],
+    updatedAt: "2026-02-04T10:00:00Z"
+  },
+  {
+    id: "guide-c3",
+    patientId: "demo",
+    title: "Refinement — Adding Replacements",
+    dietType: "LCHF",
+    noList: [
+      "White Rice", "Brown Rice", "Basmati Rice", "Mee Hoon", "Kway Teow",
+      "Noodles", "Bread", "Biscuits", "Cakes", "Rolled Oats", "White Sugar",
+      "Brown Sugar", "Honey", "All fruits (except avocado, berries)",
+      "Milk", "Fruit Juices", "Soft Drinks", "Beer"
+    ],
+    yesCategories: [
+      { name: "Meat", items: ["Pork", "Beef", "Mutton", "Duck", "Chicken", "Fish", "Prawns", "Crab"], notes: ["Fatty meat preferred"] },
+      { name: "Eggs", items: ["Chicken Eggs", "Duck Eggs"], notes: ["No limit per day, eat both white and yolk"] },
+      { name: "Tofu/Tempe", items: ["Tofu", "Tempe"], notes: [] },
+      { name: "Vegetables", items: ["Leafy greens", "Beans", "Mushrooms", "Carrot", "Radish", "Garlic", "Onion"], notes: ["All above-ground vegetables; limited underground roots"] }
+    ],
+    snacks: ["Avocados", "Strawberries", "Blueberries", "Greek Yogurt", "Nuts", "Cheese", "Seaweed"],
+    replacements: [
+      { original: "Rice", replacement: "Cauliflower rice or konjac rice" },
+      { original: "Noodles", replacement: "Konjac noodles or zucchini noodles" },
+      { original: "Flour", replacement: "Almond flour" },
+      { original: "Milk", replacement: "Whipping cream or almond milk" }
+    ],
+    portions: [
+      { label: "Meat", fraction: "1/3" },
+      { label: "Eggs or Tofu", fraction: "1/3" },
+      { label: "Vegetables", fraction: "1/3" }
+    ],
+    cookingMethods: ["Pan-fried", "Deep Fried", "Steamed", "Grilled", "Boiled", "Stewed"],
+    additionalSections: [
+      { title: "Progress Note", content: "Weight down 1.5 kg. Waistline reduced by 2 cm. Patient is adapting well. Adding more replacement options this month." },
+      { title: "Disclaimer", content: "Metanova Health Disclaimer: This plan is part of Dr. Jasmine's diabetes reversal programme and is personalised for you. It should not be construed as medical advice." }
+    ],
+    updatedAt: "2026-02-18T10:00:00Z"
+  },
+  {
+    id: "guide-c4",
+    patientId: "demo",
+    title: "Sustained Progress — Fine-Tuning",
+    dietType: "LCHF",
+    noList: [
+      "White Rice", "Brown Rice", "Basmati Rice", "Mee Hoon", "Kway Teow",
+      "Noodles", "Bread", "Biscuits", "Cakes", "Rolled Oats", "White Sugar",
+      "Brown Sugar", "Honey", "All fruits (except avocado, strawberries, blueberries)",
+      "Milk", "Fruit Juices", "Soft Drinks", "Beer"
+    ],
+    yesCategories: [
+      { name: "Meat", items: ["Pork", "Beef", "Mutton", "Duck", "Chicken", "Fish", "Crab", "Prawns"], notes: ["Fatty meat preferred for satiety"] },
+      { name: "Eggs", items: ["Chicken Eggs", "Duck Eggs"], notes: ["No limit per day, eat both white and yolk"] },
+      { name: "Tofu/Tempe", items: ["Tofu", "Tempe"], notes: [] },
+      { name: "Vegetables", items: ["Leafy greens", "Beans", "Mushrooms", "Carrot", "Radish", "Ginger", "Garlic", "Onion"], notes: ["All above-ground including leafy greens and beans except corn", "Underground: only carrot, radish, ginger, garlic, onion"] }
+    ],
+    snacks: [
+      "Avocados", "Strawberries", "Blueberries", "Cherries", "Star Fruits",
+      "Natural Greek Yogurt", "Nuts (except cashew, pistachios)", "Cheese", "Chicken skin", "Seaweed"
+    ],
+    replacements: [
+      { original: "Rice", replacement: "Cauliflower rice or konjac rice" },
+      { original: "Noodles", replacement: "Konjac noodles or zucchini noodles" },
+      { original: "Flour", replacement: "Almond flour or coconut flour" },
+      { original: "Milk", replacement: "Whipping cream or almond milk or coconut milk" }
+    ],
+    portions: [
+      { label: "Meat", fraction: "1/3" },
+      { label: "Eggs or Tofu", fraction: "1/3" },
+      { label: "Vegetables", fraction: "1/3" }
+    ],
+    cookingMethods: ["Pan-fried", "Deep Fried", "Steamed", "BBQ", "Grilled", "Boiled", "Stewed", "Raw (e.g. Sashimi)"],
+    additionalSections: [
+      { title: "Progress Note", content: "Fasting sugar now averaging 6.4 mmol/L, down from 7.8 at intake. Blood pressure stabilising. Continue current plan with no major changes." },
+      { title: "Disclaimer", content: "Metanova Health Disclaimer: This plan is part of Dr. Jasmine's diabetes reversal programme and is personalised for you. It should not be construed as medical advice." }
+    ],
+    updatedAt: "2026-03-05T10:00:00Z"
+  },
+  {
+    id: "guide-c5",
+    patientId: "demo",
+    title: "Personalised Diabetes Reversal Plan",
+    dietType: "LCHF",
+    noList: [
+      "White Rice", "Brown Rice", "Basmati Rice", "Mee Hoon", "Kway Teow",
+      "Noodles", "Bread", "Biscuits", "Cakes", "Rolled Oats", "White Sugar",
+      "Brown Sugar", "Honey", "All fruits (except avocado, strawberries, blueberries)",
+      "Milk", "Fruit Juices", "Soft Drinks", "Beer"
+    ],
+    yesCategories: [
+      { name: "Meat", items: ["Pork", "Beef", "Mutton", "Duck", "Chicken", "Fish", "Crab", "Prawns"], notes: ["Fatty meat preferred"] },
+      { name: "Eggs", items: ["Chicken Eggs", "Duck Eggs"], notes: ["No limit per day, eat both white and yolk"] },
+      { name: "Tofu/Tempe", items: ["Tofu", "Tempe"], notes: [] },
+      { name: "Vegetables", items: ["Leafy greens", "Beans", "Mushrooms", "Carrot", "Radish", "Ginger", "Garlic", "Onion"], notes: ["All above-ground including leafy greens, beans, mushrooms except corn", "Underground: only carrot, radish, ginger, garlic, onion allowed"] }
+    ],
+    snacks: [
+      "Avocados", "Strawberries", "Blueberries", "Cherries", "Star Fruits",
+      "Natural Greek Yogurt", "Nuts (except cashew, pistachios, chestnut)",
+      "Cheese (except sliced cheese)", "Chicken skin", "Fish skin", "Seaweed"
+    ],
+    replacements: [
+      { original: "Rice", replacement: "Cauliflower rice or konjac rice" },
+      { original: "Noodles", replacement: "Konjac noodles or zucchini noodles" },
+      { original: "Flour", replacement: "Almond flour or coconut flour" },
+      { original: "Milk", replacement: "Whipping cream or almond milk or coconut milk" }
+    ],
+    portions: [
+      { label: "Meat", fraction: "1/3" },
+      { label: "Eggs or Tofu", fraction: "1/3" },
+      { label: "Vegetables", fraction: "1/3" }
+    ],
+    cookingMethods: [
+      "Pan-fried", "Deep Fried", "Steamed", "BBQ", "Grilled", "Boiled", "Stewed", "Raw (e.g. Sashimi)"
+    ],
+    additionalSections: [
+      { title: "Quantity", content: "Eat when you are hungry, stop when you are 100% full. Drink when you are thirsty." },
+      { title: "Disclaimer", content: "Metanova Health Disclaimer: This plan is part of Dr. Jasmine's diabetes reversal programme and is personalised for you. It should not be construed as medical advice. Please consult your physician before making significant dietary changes." }
+    ],
+    updatedAt: "2026-03-25T10:00:00Z"
+  }
+];
+
 export const MOCK_TIMELINE_EVENTS: TimelineEvent[] = [
   { id: "evt-8", patientId: "demo", type: "reading_submitted", occurredAt: "2026-03-25T08:30:00Z", metadata: { date: "2026-03-25", fasting: 6.2, sysBP: 128, diaBP: 82, weight: 68.5 } },
   { id: "evt-7", patientId: "demo", type: "note_added", occurredAt: "2026-03-24T14:00:00Z", metadata: { preview: "Patient reports feeling less bloated..." } },

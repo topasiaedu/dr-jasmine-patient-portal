@@ -32,7 +32,7 @@ export function BottomNav({ activePath }: BottomNavProps) {
   return (
     <nav
       aria-label="Bottom Navigation"
-      className="fixed bottom-0 left-0 right-0 z-40 flex h-[72px] items-center justify-around px-1 shadow-nav-float"
+      className="md:hidden fixed bottom-0 left-0 right-0 z-40 flex h-[72px] items-center justify-around px-1 shadow-nav-float"
       style={{
         background: "rgba(255, 255, 255, 0.82)",
         backdropFilter: "blur(20px) saturate(180%)",

@@ -130,24 +130,25 @@ export default function LoggingPage() {
   const submitForm = () => {
     localStorage.removeItem("demo_log_draft");
     localStorage.removeItem("demo_log_step");
-    localStorage.setItem("demo_reading_today", "true");
+    localStorage.setItem("demo_reading_today", new Date().toDateString());
     
     // Add to history
     const historyStr = localStorage.getItem("demo_readings_history");
     const history = historyStr ? JSON.parse(historyStr) : MOCK_READINGS;
     
     const newEntry = {
-      id: "rdg_" + Date.now(),
-      patientId: "pat_1",
-      dateRecorded: new Date().toISOString(),
-      fastingSugar: data.fastingSugar || 0,
-      postDinnerSugar: data.postDinnerSugar || 0,
-      bloodPressureSystolic: data.systolic || 0,
-      bloodPressureDiastolic: data.diastolic || 0,
-      pulseRate: data.pulse || 0,
-      weight: data.weight || 0,
-      waistline: data.waistline || 0,
-      source: method === "photo" ? "camera" : "manual"
+      id: `r${Date.now()}`,
+      patientId: "demo",
+      readingDate: data.date,
+      fastingBloodSugar: Number(data.fastingSugar) || 0,
+      postDinnerBloodSugar: Number(data.postDinnerSugar) || 0,
+      bloodPressureSystolic: Number(data.systolic) || 0,
+      bloodPressureDiastolic: Number(data.diastolic) || 0,
+      pulseRate: Number(data.pulse) || 0,
+      weightKg: Number(data.weight) || 0,
+      waistlineCm: Number(data.waistline) || 0,
+      entryMethod: method === "photo" ? "photo_extracted" : "manual",
+      submittedAt: new Date().toISOString(),
     };
     
     history.unshift(newEntry);
@@ -162,7 +163,7 @@ export default function LoggingPage() {
   // STEP 0.5: SCANNING STUB VIEW
   if (step === 0.5) {
     return (
-      <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 max-w-md mx-auto relative overflow-hidden text-center z-50">
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 max-w-md md:max-w-2xl mx-auto relative overflow-hidden text-center z-50">
         <DemoControls />
         
         <div className="relative w-64 h-80 border-2 border-primary/50 rounded-xl overflow-hidden mb-8">
@@ -186,14 +187,39 @@ export default function LoggingPage() {
   // STEP 0: ENTRY CHOICE
   if (step === 0) {
     return (
-      <div className="min-h-screen bg-bg-main flex flex-col max-w-md mx-auto relative">
+      <div className="min-h-screen bg-bg-main flex flex-col max-w-md md:max-w-2xl mx-auto relative">
         <DemoControls />
-        <div className="flex items-center justify-between px-6 py-4 border-b border-depth bg-surface sticky top-0 z-10">
-          <Link href="/p/demo/home" className="p-2 -ml-2 text-main hover:bg-gray-100 rounded-full">
-            <ArrowLeft size={24} />
-          </Link>
-          <span className="font-bold text-main">Daily Log</span>
-          <div className="w-10"></div>
+        {/* Sticky header with brand strip on desktop */}
+        <div className="sticky top-0 z-10 bg-surface border-b border-depth">
+          {/* Brand strip — desktop only */}
+          <div
+            className="hidden md:flex items-center px-6 py-3 border-b border-depth"
+            style={{
+              background: "rgba(250, 248, 245, 0.90)",
+              backdropFilter: "blur(20px) saturate(180%)",
+              WebkitBackdropFilter: "blur(20px) saturate(180%)",
+            }}
+          >
+            <div className="flex flex-col justify-center leading-none select-none">
+              <span
+                className="text-[18px] text-primary leading-none"
+                style={{ fontFamily: "var(--font-display), serif" }}
+              >
+                Dr. Jasmine
+              </span>
+              <span className="text-[9px] font-semibold text-text-tertiary mt-1 uppercase tracking-[0.2em]">
+                METANOVA HEALTH
+              </span>
+            </div>
+          </div>
+          {/* Step 0 navigation row */}
+          <div className="flex items-center justify-between px-6 py-4">
+            <Link href="/p/demo/home" className="p-2 -ml-2 text-main hover:bg-gray-100 rounded-full">
+              <ArrowLeft size={24} />
+            </Link>
+            <span className="font-bold text-main">Daily Log</span>
+            <div className="w-10"></div>
+          </div>
         </div>
 
         <div className="px-6 pt-8 pb-6 flex-1 flex flex-col">
@@ -261,16 +287,40 @@ export default function LoggingPage() {
 
   // STEPS 1-8: MANUAL FORM
   return (
-    <div className="min-h-screen bg-bg-main flex flex-col max-w-md mx-auto relative overflow-hidden pb-32">
+    <div className="min-h-screen bg-bg-main flex flex-col max-w-md md:max-w-2xl mx-auto relative overflow-hidden pb-32">
       <DemoControls />
-      
+
       {/* Top Bar with Cancel/Close */}
-      <div className="flex items-center justify-between px-6 py-4 bg-surface sticky top-0 z-10 border-b border-border">
-        <Link href="/p/demo/home" className="text-sm font-semibold text-secondary hover:text-main">
-          Cancel
-        </Link>
-        <span className="font-bold text-main text-sm">Log Readings</span>
-        <div className="w-10 text-right text-xs font-bold text-primary">{step}/8</div>
+      <div className="bg-surface sticky top-0 z-10 border-b border-border">
+        {/* Brand strip — desktop only */}
+        <div
+          className="hidden md:flex items-center px-6 py-3 border-b border-depth"
+          style={{
+            background: "rgba(250, 248, 245, 0.90)",
+            backdropFilter: "blur(20px) saturate(180%)",
+            WebkitBackdropFilter: "blur(20px) saturate(180%)",
+          }}
+        >
+          <div className="flex flex-col justify-center leading-none select-none">
+            <span
+              className="text-[18px] text-primary leading-none"
+              style={{ fontFamily: "var(--font-display), serif" }}
+            >
+              Dr. Jasmine
+            </span>
+            <span className="text-[9px] font-semibold text-text-tertiary mt-1 uppercase tracking-[0.2em]">
+              METANOVA HEALTH
+            </span>
+          </div>
+        </div>
+        {/* Cancel / title / step counter row */}
+        <div className="flex items-center justify-between px-6 py-4">
+          <Link href="/p/demo/home" className="text-sm font-semibold text-secondary hover:text-main">
+            Cancel
+          </Link>
+          <span className="font-bold text-main text-sm">Log Readings</span>
+          <div className="w-10 text-right text-xs font-bold text-primary">{step}/8</div>
+        </div>
       </div>
       
       {/* Progress */}
@@ -489,7 +539,7 @@ export default function LoggingPage() {
       </div>
 
       {/* Bottom Sticky Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-surface/90 backdrop-blur border-t border-depth p-4 z-40 max-w-md mx-auto">
+      <div className="fixed bottom-0 left-0 right-0 bg-surface/90 backdrop-blur border-t border-depth p-4 z-40 max-w-md md:max-w-2xl mx-auto">
         {validationError && (
           <p className="text-danger text-sm font-medium mb-3 text-center" aria-live="polite" role="alert">{validationError}</p>
         )}

@@ -11,6 +11,54 @@ import { MotionStagger } from "@/components/motion/MotionStagger";
 import { MotionItem } from "@/components/motion/MotionItem";
 import { Card, CardContent } from "@/components/ui/card";
 
+/**
+ * Motivational quotes shown in daily rotation.
+ * Selected by day-of-year so each patient sees the same quote all day,
+ * and a fresh one the next morning.
+ */
+const MOTIVATIONAL_QUOTES: { text: string; author: string }[] = [
+  {
+    text: "Take care of your body. It's the only place you have to live.",
+    author: "Jim Rohn",
+  },
+  {
+    text: "The groundwork of all happiness is health.",
+    author: "Leigh Hunt",
+  },
+  {
+    text: "Every small step forward is a victory worth celebrating.",
+    author: "Dr. Jasmine",
+  },
+  {
+    text: "The first wealth is health.",
+    author: "Ralph Waldo Emerson",
+  },
+  {
+    text: "Small, consistent actions lead to extraordinary results.",
+    author: "Anonymous",
+  },
+  {
+    text: "Your body hears everything your mind says. Stay positive.",
+    author: "Naomi Judd",
+  },
+  {
+    text: "You don't have to be great to start, but you have to start to be great.",
+    author: "Zig Ziglar",
+  },
+  {
+    text: "Healing is not linear. Every good day is a step in the right direction.",
+    author: "Dr. Jasmine",
+  },
+  {
+    text: "Believe you can and you're halfway there.",
+    author: "Theodore Roosevelt",
+  },
+  {
+    text: "Your health is an investment, not an expense.",
+    author: "Anonymous",
+  },
+];
+
 /** Patient home page — hero greeting, task card, and appointment card. */
 export default function PatientHomePage() {
   const [hasLoggedToday, setHasLoggedToday] = useState(false);
@@ -46,6 +94,16 @@ export default function PatientHomePage() {
   }, []);
 
   const firstName = MOCK_PATIENT.fullName.split(" ")[0];
+
+  /** Pick a quote that rotates daily — consistent for the whole day. */
+  const dailyQuote = (() => {
+    const now = new Date();
+    const startOfYear = new Date(now.getFullYear(), 0, 0);
+    const dayOfYear = Math.floor(
+      (now.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    return MOTIVATIONAL_QUOTES[dayOfYear % MOTIVATIONAL_QUOTES.length];
+  })();
 
   /** Task card — shows "done" state or "Log my readings" CTA. */
   const renderTaskCard = () => {
@@ -160,6 +218,21 @@ export default function PatientHomePage() {
             Upcoming Appointment
           </h2>
           {renderApptCard()}
+        </MotionItem>
+
+        {/* Daily motivational quote */}
+        <MotionItem>
+          <div className="border-l-2 border-primary/30 pl-4 py-1">
+            <p
+              className="text-[17px] leading-relaxed text-text-primary italic"
+              style={{ fontFamily: "var(--font-display), serif" }}
+            >
+              &ldquo;{dailyQuote.text}&rdquo;
+            </p>
+            <p className="mt-2 text-xs font-medium uppercase tracking-[0.12em] text-text-tertiary">
+              &mdash; {dailyQuote.author}
+            </p>
+          </div>
         </MotionItem>
       </MotionStagger>
     </PatientPageLayout>
