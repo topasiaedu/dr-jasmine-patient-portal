@@ -37,6 +37,7 @@ type StepData = {
 
   /** Step 3 — Health Background */
   chiefComplaint: string;
+  symptoms: string[];
   existingConditions: string[];
   currentMedications: string[];
   allergies: string[];
@@ -74,6 +75,7 @@ export default function OnboardingPage() {
     referredBy: "",
     payerFullName: MOCK_PATIENT.fullName,
     chiefComplaint: "",
+    symptoms: [],
     existingConditions: [],
     currentMedications: [],
     allergies: [],
@@ -108,7 +110,15 @@ export default function OnboardingPage() {
     const draftStep = localStorage.getItem("demo_onboarding_step");
     if (draft) {
       try {
-        setData(JSON.parse(draft));
+        const parsed = JSON.parse(draft);
+        setData(prev => ({ 
+          ...prev, 
+          ...parsed,
+          symptoms: parsed.symptoms || prev.symptoms || [],
+          existingConditions: parsed.existingConditions || prev.existingConditions || [],
+          currentMedications: parsed.currentMedications || prev.currentMedications || [],
+          allergies: parsed.allergies || prev.allergies || []
+        }));
       } catch (e: unknown) {
         console.error("Failed to parse localStorage:", e);
       }
@@ -460,6 +470,49 @@ export default function OnboardingPage() {
             <div className="space-y-6">
               <div className="space-y-6">
                 <div>
+                  <label className="block text-sm font-semibold text-main mb-2">
+                    Current Symptoms / 目前症状 (Optional)
+                  </label>
+                  <p className="text-sm text-text-secondary mb-3">
+                    Tick all that apply. This helps Dr. Jasmine prepare for your consultation.
+                  </p>
+                  <div className="grid grid-cols-1 gap-3">
+                    {[
+                      { id: "Frequent urination at night", label: "Frequent urination at night (nocturia) / 夜尿频繁" },
+                      { id: "Excessive thirst", label: "Excessive thirst / 过度口渴" },
+                      { id: "Unexplained fatigue", label: "Unexplained fatigue / 莫名疲倦" },
+                      { id: "Blurred vision", label: "Blurred vision / 视力模糊" },
+                      { id: "Numbness or tingling in hands/feet", label: "Numbness or tingling in hands/feet / 手脚麻木或刺痛" },
+                      { id: "Slow-healing wounds", label: "Slow-healing wounds / 伤口愈合缓慢" },
+                      { id: "Skin darkening", label: "Skin darkening (neck/armpits) / 皮肤变黑" },
+                      { id: "Unexplained weight loss", label: "Unexplained weight loss / 莫名体重下降" },
+                      ...(data.gender === "male" ? [{ id: "Erectile dysfunction", label: "Erectile dysfunction" }] : []),
+                    ].map((option) => (
+                      <button
+                        type="button"
+                        key={option.id}
+                        onClick={() => {
+                          if (data.symptoms.includes(option.id)) {
+                            setData({ ...data, symptoms: data.symptoms.filter((s) => s !== option.id) });
+                          } else {
+                            setData({ ...data, symptoms: [...data.symptoms, option.id] });
+                          }
+                        }}
+                        className={[
+                          "h-14 rounded-xl border text-left px-4 font-medium transition-colors min-h-[56px]",
+                          data.symptoms.includes(option.id)
+                            ? "border-primary bg-primary-light text-primary"
+                            : "border-border text-main hover:border-gray-300",
+                        ].join(" ")}
+                        aria-pressed={data.symptoms.includes(option.id)}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
                   <label htmlFor="onboarding-complaint" className="block text-sm font-semibold text-main mb-1">
                     Why are you seeing Dr. Jasmine today? *
                   </label>
@@ -476,6 +529,34 @@ export default function OnboardingPage() {
                   <label htmlFor="onboarding-conditions" className="block text-sm font-semibold text-main mb-1">
                     Existing Medical Conditions
                   </label>
+                  <p className="text-sm text-text-secondary mb-3">E.g. Hypertension</p>
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {[
+                      "Hypertension", "Type 2 Diabetes", "Prediabetes", "High Cholesterol", 
+                      "Fatty Liver", "PCOS", "Thyroid Condition", "Heart Disease", 
+                      "Kidney Disease", "Gout", "Osteoarthritis", "Sleep Apnea"
+                    ].map((condition) => (
+                      <button
+                        type="button"
+                        key={condition}
+                        onClick={() => {
+                          if (data.existingConditions.includes(condition)) {
+                            setData({ ...data, existingConditions: data.existingConditions.filter((c) => c !== condition) });
+                          } else {
+                            setData({ ...data, existingConditions: [...data.existingConditions, condition] });
+                          }
+                        }}
+                        className={[
+                          "px-4 py-2 rounded-full border text-sm font-medium transition-colors min-h-[36px]",
+                          data.existingConditions.includes(condition)
+                            ? "border-primary bg-primary-light text-primary"
+                            : "border-border bg-white text-main",
+                        ].join(" ")}
+                      >
+                        {condition}
+                      </button>
+                    ))}
+                  </div>
                   <div className="flex gap-2">
                     <Input
                       id="onboarding-conditions"
@@ -526,6 +607,33 @@ export default function OnboardingPage() {
                   <label htmlFor="onboarding-medications" className="block text-sm font-semibold text-main mb-1">
                     Current Medications
                   </label>
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {[
+                      "Metformin 500mg", "Metformin 850mg", "Metformin 1000mg", "Sitagliptin (Januvia)",
+                      "Empagliflozin (Jardiance)", "Dapagliflozin (Forxiga)", "Atorvastatin (Lipitor)",
+                      "Rosuvastatin (Crestor)", "Amlodipine", "Lisinopril", "Losartan", "Aspirin 100mg"
+                    ].map((medication) => (
+                      <button
+                        type="button"
+                        key={medication}
+                        onClick={() => {
+                          if (data.currentMedications.includes(medication)) {
+                            setData({ ...data, currentMedications: data.currentMedications.filter((m) => m !== medication) });
+                          } else {
+                            setData({ ...data, currentMedications: [...data.currentMedications, medication] });
+                          }
+                        }}
+                        className={[
+                          "px-4 py-2 rounded-full border text-sm font-medium transition-colors min-h-[36px]",
+                          data.currentMedications.includes(medication)
+                            ? "border-primary bg-primary-light text-primary"
+                            : "border-border bg-white text-main",
+                        ].join(" ")}
+                      >
+                        {medication}
+                      </button>
+                    ))}
+                  </div>
                   <div className="flex gap-2">
                     <Input
                       id="onboarding-medications"
@@ -576,6 +684,35 @@ export default function OnboardingPage() {
                   <label htmlFor="onboarding-allergies" className="block text-sm font-semibold text-main mb-1">
                     Known Allergies
                   </label>
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {[
+                      "None", "Penicillin", "Sulfa drugs", "NSAIDs (Ibuprofen)", "Shellfish",
+                      "Peanuts", "Tree Nuts", "Latex", "Dairy"
+                    ].map((allergy) => (
+                      <button
+                        type="button"
+                        key={allergy}
+                        onClick={() => {
+                          if (allergy === "None") {
+                            setData({ ...data, allergies: ["None"] });
+                          } else {
+                            const newAllergies = data.allergies.includes(allergy)
+                              ? data.allergies.filter((a) => a !== allergy)
+                              : [...data.allergies.filter((a) => a !== "None"), allergy];
+                            setData({ ...data, allergies: newAllergies });
+                          }
+                        }}
+                        className={[
+                          "px-4 py-2 rounded-full border text-sm font-medium transition-colors min-h-[36px]",
+                          data.allergies.includes(allergy)
+                            ? "border-primary bg-primary-light text-primary"
+                            : "border-border bg-white text-main",
+                        ].join(" ")}
+                      >
+                        {allergy}
+                      </button>
+                    ))}
+                  </div>
                   <div className="flex gap-2">
                     <Input
                       id="onboarding-allergies"
@@ -841,6 +978,7 @@ export default function OnboardingPage() {
                   </div>
                   <CardContent className="p-4 space-y-2 text-sm">
                     <p><span className="font-semibold text-main">Chief Complaint:</span> <span className="text-text-secondary">{data.chiefComplaint || "—"}</span></p>
+                    <p><span className="font-semibold text-main">Symptoms:</span> <span className="text-text-secondary">{data.symptoms.length ? data.symptoms.join(", ") : "None reported"}</span></p>
                     <p><span className="font-semibold text-main">Conditions:</span> <span className="text-text-secondary">{data.existingConditions.length ? data.existingConditions.join(", ") : "None"}</span></p>
                     <p><span className="font-semibold text-main">Medications:</span> <span className="text-text-secondary">{data.currentMedications.length ? data.currentMedications.join(", ") : "None"}</span></p>
                     <p><span className="font-semibold text-main">Allergies:</span> <span className="text-text-secondary">{data.allergies.length ? data.allergies.join(", ") : "None"}</span></p>

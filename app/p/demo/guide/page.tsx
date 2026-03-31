@@ -1,232 +1,353 @@
 "use client";
 
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
-import { Printer } from "lucide-react";
+import { Download } from "lucide-react";
 import { PatientPageLayout } from "@/components/patient/PatientPageLayout";
-import { MotionStagger } from "@/components/motion/MotionStagger";
-import { MotionItem } from "@/components/motion/MotionItem";
-import { Button } from "@/components/ui/button";
-import { MOCK_CONSULTATION_GUIDES, MOCK_PATIENT, PatientGuide } from "@/lib/mock-data";
+import {
+  MOCK_CONSULTATION_NOTES,
+  MOCK_GUIDE_VERSIONS,
+  MOCK_PATIENT,
+  ConsultationNote,
+  GuideVersion,
+} from "@/lib/mock-data";
 import { format, parseISO } from "date-fns";
-import { cn } from "@/lib/utils";
 
-/** Labels for each consultation tab button. */
-const CONSULT_LABELS = [
-  "Consult 1",
-  "Consult 2",
-  "Consult 3",
-  "Consult 4",
-  "Consult 5",
-];
+/** Active guide = the version not yet superseded by a newer phase. */
+function getActiveGuide(versions: GuideVersion[]): GuideVersion | undefined {
+  return (
+    versions.find((v) => v.supersededAt === null) ??
+    (versions.length > 0 ? versions[versions.length - 1] : undefined)
+  );
+}
 
-/**
- * Guide page — patient's personalised dietary guide with premium document layout.
- * Shows five consultation tabs; each tab renders the guide issued after that session.
- * Uses DM Serif Display for the branded header.
- */
-export default function GuidePage() {
-  /**
-   * selectedIndex: which consultation is active (0–4).
-   * Defaults to the latest (index 4) which is the most recent guide.
-   */
-  const [selectedIndex, setSelectedIndex] = useState<number>(4);
-
-  /**
-   * guide: the PatientGuide data for the selected consultation.
-   * Loaded from localStorage if overridden, otherwise from MOCK_CONSULTATION_GUIDES.
-   */
-  const [guides, setGuides] = useState<PatientGuide[]>(MOCK_CONSULTATION_GUIDES);
-
-  useEffect(() => {
-    /**
-     * Check if localStorage has a custom guide for the latest consultation.
-     * If so, replace index 4 with the stored guide to preserve compatibility
-     * with the admin guide-editor flow.
-     */
-    const local = localStorage.getItem("demo_patient_guide");
-    if (local) {
-      try {
-        const parsed: PatientGuide = JSON.parse(local);
-        setGuides((prev) => {
-          const updated = [...prev];
-          updated[4] = parsed;
-          return updated;
-        });
-      } catch (e: unknown) {
-        console.error("Failed to parse localStorage guide:", e);
+/** Merge mock notes with anything saved by the consult panel. */
+function loadPatientFacingNotes(): ConsultationNote[] {
+  const base = [...MOCK_CONSULTATION_NOTES];
+  const raw = localStorage.getItem("demo_consultation_notes");
+  if (!raw) return base;
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return base;
+    const byId = new Map<string, ConsultationNote>(base.map((n) => [n.id, n]));
+    for (const n of parsed as ConsultationNote[]) {
+      if (n && typeof n.id === "string" && typeof n.patientNote === "string") {
+        byId.set(n.id, n);
       }
     }
+    return Array.from(byId.values());
+  } catch {
+    return base;
+  }
+}
+
+export default function GuidePage() {
+  const [activeGuide, setActiveGuide] = useState<GuideVersion | undefined>(undefined);
+  const [patientNotes, setPatientNotes] = useState<ConsultationNote[]>([]);
+
+  useEffect(() => {
+    const raw =
+      localStorage.getItem("demo_guide_versions") ??
+      localStorage.getItem("demo_patient_guides");
+    let loaded = MOCK_GUIDE_VERSIONS;
+    if (raw) {
+      try {
+        const parsed: unknown = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          loaded = parsed as GuideVersion[];
+        }
+      } catch (e: unknown) {
+        console.error("Failed to parse localStorage guides:", e);
+      }
+    }
+    setActiveGuide(getActiveGuide(loaded));
+    setPatientNotes(loadPatientFacingNotes());
   }, []);
 
-  const activeGuide = guides[selectedIndex];
+  const sortedNotes = useMemo(
+    () =>
+      patientNotes
+        .filter((n) => n.patientNote.trim().length > 0)
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        ),
+    [patientNotes]
+  );
 
-  const handlePrint = () => {
-    window.print();
-  };
-
-  if (!activeGuide) return null;
+  if (!activeGuide) {
+    return (
+      <PatientPageLayout activePath="/p/demo/guide">
+        <div className="flex flex-col items-center justify-center min-h-[60vh] px-8 text-center">
+          <div className="w-16 h-16 rounded-full bg-primary/[0.08] flex items-center justify-center mb-6">
+            <span className="text-3xl">📋</span>
+          </div>
+          <p className="font-display text-[22px] text-text-primary mb-2">
+            Your guide is on its way
+          </p>
+          <p className="text-text-secondary text-base leading-relaxed max-w-xs">
+            Dr. Jasmine will add your personalised plan after your first
+            consultation.
+          </p>
+        </div>
+      </PatientPageLayout>
+    );
+  }
 
   return (
     <PatientPageLayout activePath="/p/demo/guide">
-      {/* Sticky toolbar: consultation selector + export button */}
-      <div className="print:hidden sticky top-0 z-10 bg-bg-main border-b border-depth">
-        {/* Top row: label + export */}
-        <div className="flex items-center justify-between px-6 py-3">
-          <p className="text-sm text-text-secondary font-medium">Dietary Guide</p>
-          <Button variant="outline" size="patient" onClick={handlePrint}>
-            <Printer size={16} className="mr-2" />
-            Export as PDF
-          </Button>
-        </div>
-
-        {/* Consultation selector — horizontal scroll row of 5 buttons */}
-        <div
-          className="flex gap-2 px-6 pb-3 overflow-x-auto"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-          role="tablist"
-          aria-label="Select consultation"
-        >
-          {CONSULT_LABELS.map((label, idx) => (
-            <button
-              key={label}
-              role="tab"
-              aria-selected={selectedIndex === idx}
-              aria-controls="guide-panel"
-              onClick={() => setSelectedIndex(idx)}
-              className={cn(
-                "flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors border whitespace-nowrap",
-                selectedIndex === idx
-                  ? "bg-primary text-white border-primary shadow-sm"
-                  : "bg-surface text-text-secondary border-border hover:border-primary/40 hover:text-text-primary"
-              )}
-            >
-              {label}
-            </button>
-          ))}
+      {/* ── Sticky top bar ── */}
+      <div className="print:hidden sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-border">
+        <div className="flex items-center justify-between px-6 h-12">
+          <span className="text-sm font-medium text-text-secondary truncate max-w-[60%]">
+            {activeGuide.protocolName}
+          </span>
+          <button
+            onClick={() => window.print()}
+            className="flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
+          >
+            <Download size={14} />
+            Save PDF
+          </button>
         </div>
       </div>
 
-      {/* Guide content panel */}
-      <div
-        id="guide-panel"
-        role="tabpanel"
-        aria-label={`${CONSULT_LABELS[selectedIndex]} guide`}
-        className="w-full max-w-2xl mx-auto px-6 pb-8 space-y-12"
-      >
-        <MotionStagger key={selectedIndex}>
-          <MotionItem>
-            <div className="pt-8 space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.15em] text-text-tertiary">
-                {CONSULT_LABELS[selectedIndex]}
-              </p>
-              <h1 className="text-[28px] font-display text-main">Your Guide</h1>
-              <h2 className="text-[24px] font-display text-main">{activeGuide.title}</h2>
-              <p className="text-sm text-text-tertiary">
-                Last updated: {format(parseISO(activeGuide.updatedAt), "MMMM yyyy")} &middot; {MOCK_PATIENT.fullName}
-              </p>
-            </div>
-          </MotionItem>
-        </MotionStagger>
+      <div className="w-full max-w-xl mx-auto px-5 pb-24">
 
-        <RevealSection>
-          <SectionHeader title="FOODS TO AVOID" />
-          <div className="bg-[#FEF2F2] border border-[#FEE2E2] rounded-2xl p-6 border-l-4 border-l-[#DC2626]">
-            <div className="flex flex-wrap gap-3">
-              {activeGuide.noList.map((item) => (
-                <span
-                  key={item}
-                  className="inline-block rounded-full px-3 py-1.5 text-sm bg-surface text-main border border-[#FECACA]"
-                >
-                  {item}
-                </span>
+        {/* ── Hero ── */}
+        <Reveal>
+          <div className="pt-10 pb-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.15em] text-primary mb-3">
+              Your personalised plan
+            </p>
+            <h1
+              className="font-display text-[34px] leading-tight text-text-primary mb-3"
+              style={{ letterSpacing: "-0.02em" }}
+            >
+              {activeGuide.protocolName}
+            </h1>
+            <p className="text-sm text-text-tertiary">
+              {MOCK_PATIENT.fullName} ·{" "}
+              {format(parseISO(activeGuide.updatedAt), "MMMM yyyy")}
+            </p>
+          </div>
+        </Reveal>
+
+        {/* ── Avoid ── */}
+        <Reveal>
+          <section className="mt-10">
+            <Label color="red">Do not eat</Label>
+            <div className="mt-3 rounded-2xl bg-[#FEF2F2] border border-[#FEE2E2] p-5">
+              <div className="flex flex-wrap gap-2">
+                {activeGuide.noList.map((item) => (
+                  <span
+                    key={item}
+                    className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-medium text-[#B91C1C] bg-white border border-[#FECACA]"
+                  >
+                    <span className="text-[10px]">✕</span>
+                    {item}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </section>
+        </Reveal>
+
+        {/* ── Can eat ── */}
+        <Reveal>
+          <section className="mt-10">
+            <Label color="green">You can eat</Label>
+            <div className="mt-3 space-y-5">
+              {activeGuide.yesCategories.map((cat) => (
+                <div key={cat.name}>
+                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-primary mb-2">
+                    {cat.name}
+                  </p>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {cat.items.map((item) => (
+                      <span
+                        key={`${cat.name}-${item}`}
+                        className="inline-block rounded-full px-3 py-1.5 text-sm font-medium text-main bg-white border border-primary/20"
+                      >
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                  {cat.notes.length > 0 && (
+                    <ul className="text-sm text-text-secondary space-y-0.5 pl-1">
+                      {cat.notes.map((note) => (
+                        <li key={note} className="flex gap-2">
+                          <span className="mt-1 w-1 h-1 rounded-full bg-primary/40 shrink-0" />
+                          {note}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               ))}
             </div>
-          </div>
-        </RevealSection>
+          </section>
+        </Reveal>
 
-        <RevealSection>
-          <SectionHeader title="FOODS YOU CAN EAT" />
-          <div className="bg-primary-light border border-primary/20 rounded-2xl p-6 border-l-4 border-l-primary space-y-5">
-            {activeGuide.yesCategories.map((cat) => (
-              <div key={cat.name} className="space-y-2">
-                <p className="font-semibold text-main">{cat.name}</p>
-                <div className="flex flex-wrap gap-2">
-                  {cat.items.map((item) => (
-                    <span
-                      key={`${cat.name}-${item}`}
-                      className="inline-block rounded-full px-3 py-1.5 text-sm bg-surface border border-primary/20 text-main"
-                    >
-                      {item}
-                    </span>
-                  ))}
-                </div>
+        {/* ── Snacks (conditional) ── */}
+        {activeGuide.snacks.length > 0 && (
+          <Reveal>
+            <section className="mt-10">
+              <Label color="green">Snacks</Label>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {activeGuide.snacks.map((item) => (
+                  <span
+                    key={item}
+                    className="inline-block rounded-full px-3 py-1.5 text-sm font-medium text-main bg-white border border-primary/20"
+                  >
+                    {item}
+                  </span>
+                ))}
               </div>
-            ))}
-          </div>
-        </RevealSection>
+            </section>
+          </Reveal>
+        )}
 
-        <RevealSection>
-          <SectionHeader title="SMART REPLACEMENTS" />
-          <div className="bg-surface border border-border rounded-2xl p-6">
-            <div className="space-y-3">
-              {activeGuide.replacements.map((rep, idx) => (
-                <div
-                  key={`${rep.original}-${rep.replacement}-${idx}`}
-                  className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 text-sm py-2 border-b border-depth last:border-b-0"
-                >
-                  <span className="text-text-secondary">{rep.original}</span>
-                  <span className="text-primary font-semibold">&rarr;</span>
-                  <span className="text-main font-medium">{rep.replacement}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </RevealSection>
-
-        <RevealSection>
-          <SectionHeader title="PORTION GUIDANCE" />
-          <div className="bg-surface border border-border rounded-2xl p-6 space-y-3">
-            {activeGuide.portions.map((portion, idx) => (
-              <div
-                key={`${portion.label}-${idx}`}
-                className="flex items-center justify-between border-b border-depth pb-2 last:border-b-0"
-              >
-                <span className="text-text-secondary">{portion.label}</span>
-                <span className="text-main font-semibold">{portion.fraction}</span>
+        {/* ── Replacements ── */}
+        {activeGuide.replacements.length > 0 && (
+          <Reveal>
+            <section className="mt-10">
+              <Label color="neutral">Smart swaps</Label>
+              <div className="mt-3 rounded-2xl bg-[#F7F5F2] border border-border overflow-hidden">
+                {activeGuide.replacements.map((rep, idx) => (
+                  <div
+                    key={`${rep.original}-${idx}`}
+                    className="grid grid-cols-[1fr_28px_1fr] items-center gap-2 px-5 py-3.5 border-b border-border/60 last:border-b-0 text-sm"
+                  >
+                    <span className="text-text-secondary">{rep.original}</span>
+                    <span className="text-primary font-bold text-center">→</span>
+                    <span className="text-main font-medium">{rep.replacement}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </RevealSection>
+            </section>
+          </Reveal>
+        )}
+
+        {/* ── Portions ── */}
+        {activeGuide.portions.length > 0 && (
+          <Reveal>
+            <section className="mt-10">
+              <Label color="neutral">Your plate</Label>
+              <div className="mt-3 rounded-2xl bg-[#F7F5F2] border border-border overflow-hidden">
+                {activeGuide.portions.map((portion, idx) => (
+                  <div
+                    key={`${portion.label}-${idx}`}
+                    className="flex items-center justify-between px-5 py-3.5 border-b border-border/60 last:border-b-0"
+                  >
+                    <span className="text-sm text-text-secondary">{portion.label}</span>
+                    <span className="text-base font-bold text-main">{portion.fraction}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </Reveal>
+        )}
+
+        {/* ── Cooking methods (conditional) ── */}
+        {activeGuide.cookingMethods.length > 0 && (
+          <Reveal>
+            <section className="mt-10">
+              <Label color="neutral">How to cook</Label>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {activeGuide.cookingMethods.map((method) => (
+                  <span
+                    key={method}
+                    className="inline-block rounded-full px-3 py-1.5 text-sm font-medium text-main bg-[#F7F5F2] border border-border"
+                  >
+                    {method}
+                  </span>
+                ))}
+              </div>
+            </section>
+          </Reveal>
+        )}
+
+        {/* ── Additional sections — render exactly what Dr. Jasmine added, nothing more ── */}
+        {activeGuide.additionalSections.map((section) => (
+          <Reveal key={section.title}>
+            <section className="mt-10">
+              <Label color="neutral">{section.title}</Label>
+              <div className="mt-3 rounded-2xl bg-[#F7F5F2] border border-border px-5 py-4">
+                <p className="text-main text-[15px] leading-[1.75] whitespace-pre-line">
+                  {section.content}
+                </p>
+              </div>
+            </section>
+          </Reveal>
+        ))}
+
+        {/* ── Notes from Dr. Jasmine ── */}
+        {sortedNotes.length > 0 && (
+          <Reveal>
+            <section className="mt-14">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="h-px flex-1 bg-border" />
+                <p className="text-xs font-semibold uppercase tracking-[0.15em] text-text-tertiary shrink-0">
+                  From Dr. Jasmine
+                </p>
+                <div className="h-px flex-1 bg-border" />
+              </div>
+              <div className="space-y-4">
+                {sortedNotes.map((note) => (
+                  <article
+                    key={note.id}
+                    className="rounded-2xl border border-border bg-white px-5 py-4 shadow-sm"
+                  >
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-text-tertiary mb-3">
+                      {format(parseISO(note.createdAt), "d MMMM yyyy")}
+                    </p>
+                    <p className="text-main text-[15px] leading-[1.75]">
+                      {note.patientNote}
+                    </p>
+                  </article>
+                ))}
+              </div>
+            </section>
+          </Reveal>
+        )}
       </div>
     </PatientPageLayout>
   );
 }
 
-/**
- * Section title using the prompt's typography and border treatment.
- */
-function SectionHeader({ title }: { title: string }) {
+/** Coloured section label replacing the old underline header. */
+function Label({
+  children,
+  color,
+}: {
+  children: ReactNode;
+  color: "red" | "green" | "neutral";
+}) {
+  const colours = {
+    red: "text-[#B91C1C]",
+    green: "text-primary",
+    neutral: "text-text-secondary",
+  };
   return (
-    <h3 className="text-[13px] font-medium uppercase tracking-[0.1em] text-text-secondary border-b border-border pb-2 mb-4">
-      {title}
-    </h3>
+    <p
+      className={`text-xs font-bold uppercase tracking-[0.14em] ${colours[color]}`}
+    >
+      {children}
+    </p>
   );
 }
 
-/**
- * Fade-up reveal wrapper triggered when section enters viewport.
- */
-function RevealSection({ children }: { children: ReactNode }) {
-  const sectionRef = useRef<HTMLDivElement | null>(null);
-  const inView = useInView(sectionRef, { once: true, margin: "-80px" });
-
+/** Fade-up reveal wrapper triggered when the section enters the viewport. */
+function Reveal({ children }: { children: ReactNode }) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const inView = useInView(ref, { once: true, margin: "-60px" });
   return (
     <motion.div
-      ref={sectionRef}
-      initial={{ opacity: 0, y: 20 }}
-      animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-      transition={{ duration: 0.35, ease: "easeOut" }}
+      ref={ref}
+      initial={{ opacity: 0, y: 16 }}
+      animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
     >
       {children}
     </motion.div>

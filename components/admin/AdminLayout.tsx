@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { label: "Patients", href: "/admin/patients", icon: Users },
-  { label: "Schedule", href: "/admin/schedule", icon: CalendarDays },
+  { label: "Calendar", href: "/admin/calendar", icon: CalendarDays },
 ];
 
 /**

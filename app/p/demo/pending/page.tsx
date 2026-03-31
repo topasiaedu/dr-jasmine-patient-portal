@@ -8,8 +8,8 @@ import { MotionItem } from "@/components/motion/MotionItem";
 import { MotionStagger } from "@/components/motion/MotionStagger";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { MOCK_PATIENT } from "@/lib/mock-data";
 
-/** Pre-consultation pending page — shown after booking, before the first appointment. */
 export default function PendingPage() {
   const [apptInfo, setApptInfo] = useState<{
     date: string;
@@ -48,7 +48,6 @@ export default function PendingPage() {
     return `${displayHour}:${String(newMin).padStart(2, "0")} ${newPeriod}`;
   }
 
-  /** Preparation tips for new patients. */
   const TIPS = [
     "Have your glucometer and blood pressure monitor ready",
     "Write down any questions you'd like to ask Dr. Jasmine",
@@ -79,7 +78,7 @@ export default function PendingPage() {
 
         <MotionItem>
           <h1 className="font-display text-[36px] font-normal text-text-primary mb-8 text-center tracking-[-0.03em]">
-            You&apos;re all booked in!
+            Session {MOCK_PATIENT.sessionsCompleted + 1} Confirmed
           </h1>
         </MotionItem>
 
@@ -87,7 +86,7 @@ export default function PendingPage() {
           <Card variant="elevated" className="w-full overflow-hidden mb-6">
             <div className="bg-primary/[0.07] px-5 py-4 border-b border-primary/10">
               <h2 className="font-semibold text-primary text-lg">
-                Your first consultation with Dr. Jasmine
+                Your session is booked.
               </h2>
             </div>
             <CardContent className="p-5 flex flex-col gap-4">
@@ -142,8 +141,7 @@ export default function PendingPage() {
             What happens next?
           </h3>
           <p className="text-text-secondary leading-relaxed text-base">
-            Dr. Jasmine will introduce you to the rest of this app during your
-            consultation. You&apos;re all set for now!
+            Dr. Jasmine will review your progress and discuss next steps during your consultation. You&apos;re all set for now!
           </p>
         </MotionItem>
 

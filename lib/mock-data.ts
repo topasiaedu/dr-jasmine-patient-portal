@@ -7,6 +7,10 @@ export interface Patient {
   phone: string;
   status: "onboarding" | "booked" | "active";
   createdAt: string;
+  /** Total sessions the patient is entitled to under their current programme (default: 5) */
+  sessionsEntitled: number;
+  /** Number of consultations that have status = "completed" */
+  sessionsCompleted: number;
 }
 
 // Onboarding
@@ -32,6 +36,8 @@ export interface OnboardingResponse {
   activityLevel: "sedentary" | "light" | "moderate" | "active";
   dietaryNotes: string;
   additionalNotes: string;
+  /** Diabetes/metabolic symptoms the patient is currently experiencing. */
+  symptoms: string[];
 }
 
 // Daily Reading
@@ -60,6 +66,12 @@ export interface Appointment {
   zoomJoinUrl: string;
   isFirstConsultation: boolean;
   status: "scheduled" | "completed" | "cancelled";
+  /** Which session number this is (1 = first consultation, 2 = second, etc.) */
+  sessionNumber: number;
+  /** Duration in minutes — always 60 for session 1, always 30 for sessions 2+ */
+  durationMinutes: 30 | 60;
+  /** Who initiated the booking. "patient" = portal, "admin" = admin panel. */
+  scheduledBy: "patient" | "admin";
 }
 
 // Guide
@@ -82,6 +94,52 @@ export interface PatientGuide {
   updatedAt: string;
 }
 
+export interface GuideVersion {
+  id: string;
+  patientId: string;
+  /** Incrementing version number starting at 1 */
+  versionNumber: number;
+  /** Human-readable name for this protocol phase, shown as the guide title to the patient. */
+  protocolName: string;
+  /** Private clinical note explaining why this phase was started. Only visible to Dr. Jasmine. */
+  clinicalRationale: string;
+  /** The session number during which this guide version was introduced */
+  introducedAtSession: number;
+  /** ISO 8601 date this version became active */
+  activeFrom: string;
+  /** ISO 8601 date this version was replaced by a newer one. null = this is the current active guide. */
+  supersededAt: string | null;
+  /** All existing guide content fields */
+  noList: string[];
+  yesCategories: FoodCategory[];
+  snacks: string[];
+  replacements: FoodReplacement[];
+  portions: PortionGuidance[];
+  cookingMethods: string[];
+  additionalSections: FreeTextSection[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** A recurring weekly availability window — the hours Dr. Jasmine is open for consultations. */
+export interface AvailabilityWindow {
+  id: string;
+  /** 0 = Sunday, 1 = Monday, ..., 6 = Saturday */
+  dayOfWeek: 0 | 1 | 2 | 3 | 4 | 5 | 6;
+  startTime: string;   /** "HH:mm" — e.g. "09:00" */
+  endTime: string;     /** "HH:mm" — e.g. "12:00" */
+}
+
+/** A specific blocked period — overrides availability windows. Only visible to Dr. Jasmine. */
+export interface BlockedSlot {
+  id: string;
+  startsAt: string;   /** ISO 8601 datetime */
+  endsAt: string;     /** ISO 8601 datetime */
+  /** Private label, only shown to Dr. Jasmine. */
+  privateLabel: string;
+  isAllDay: boolean;
+}
+
 // Timeline
 export type TimelineEventType =
   | "patient_created" | "onboarding_completed" | "appointment_booked"
@@ -101,7 +159,12 @@ export interface ConsultationNote {
   id: string;
   patientId: string;
   appointmentId: string | null;
-  content: string;
+  /** Dr. Jasmine's private clinical notes. Never shown to the patient. */
+  privateNotes: string;
+  /** The note Dr. Jasmine writes for the patient, sent via WhatsApp after the session. */
+  patientNote: string;
+  /** ISO 8601 datetime when the patient note was dispatched via WhatsApp. null = not sent. */
+  patientNoteSentAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -113,7 +176,9 @@ export const MOCK_PATIENT: Patient = {
   email: "lily@example.com",
   phone: "+60 12 345 6789",
   status: "active",
-  createdAt: "2026-01-01T08:00:00Z"
+  createdAt: "2026-01-01T08:00:00Z",
+  sessionsEntitled: 5,
+  sessionsCompleted: 2
 };
 
 export const MOCK_ONBOARDING: OnboardingResponse = {
@@ -137,7 +202,8 @@ export const MOCK_ONBOARDING: OnboardingResponse = {
   alcoholUse: "occasional",
   activityLevel: "sedentary",
   dietaryNotes: "",
-  additionalNotes: ""
+  additionalNotes: "",
+  symptoms: ["Frequent urination at night", "Fatigue", "Numbness in feet"]
 };
 
 export const MOCK_READINGS: DailyReading[] = [
@@ -158,7 +224,10 @@ export const MOCK_APPOINTMENT: Appointment = {
   endsAt: "2026-03-28T10:30:00Z",
   zoomJoinUrl: "https://zoom.us/j/demo",
   isFirstConsultation: true,
-  status: "scheduled"
+  status: "scheduled",
+  sessionNumber: 1,
+  durationMinutes: 60,
+  scheduledBy: "patient"
 };
 
 export const MOCK_GUIDE: PatientGuide = {
@@ -388,6 +457,11 @@ export const MOCK_CONSULTATION_GUIDES: PatientGuide[] = [
     ],
     additionalSections: [
       { title: "Quantity", content: "Eat when you are hungry, stop when you are 100% full. Drink when you are thirsty." },
+      {
+        title: "Intermittent Fasting Protocol",
+        content:
+          "Dr. Jasmine has asked you to follow this on top of your LCHF plan from now on. Eat all meals within an 8-hour window (for example 11:00 AM to 7:00 PM). Outside that window, drink water, plain tea, or black coffee only — no milk, juice, or snacks. If you feel unwell, dizzy, or very hungry, stop fasting and message the clinic. She will adjust this with you when you next speak.",
+      },
       { title: "Disclaimer", content: "Metanova Health Disclaimer: This plan is part of Dr. Jasmine's diabetes reversal programme and is personalised for you. It should not be construed as medical advice. Please consult your physician before making significant dietary changes." }
     ],
     updatedAt: "2026-03-25T10:00:00Z"
@@ -411,7 +485,10 @@ export const MOCK_CONSULTATION_NOTES: ConsultationNote[] = [
     id: "note-2",
     patientId: "demo",
     appointmentId: null,
-    content: "Patient reports feeling less bloated. Fasting readings improving. Updated guide with replacement options. Encouraged to log readings daily.",
+    privateNotes: "Patient reports feeling less bloated. Fasting readings improving. Updated guide with replacement options. Encouraged to log readings daily.",
+    patientNote:
+      "Hi Lily — great to see your readings trending down. Keep following your LCHF plan and logging daily. I have added a fasting window to your guide in the app; start gently this week and WhatsApp us if anything feels off. We will review how it feels at your next session.",
+    patientNoteSentAt: "2026-03-24T14:05:00Z",
     createdAt: "2026-03-24T14:00:00Z",
     updatedAt: "2026-03-24T14:00:00Z"
   },
@@ -419,8 +496,53 @@ export const MOCK_CONSULTATION_NOTES: ConsultationNote[] = [
     id: "note-1",
     patientId: "demo",
     appointmentId: "appt-0",
-    content: "First consultation. Patient is motivated to start LCHF. Introduced the diet plan, explained the homework sheet. Advised to reduce portion sizes gradually. Follow up in 2 weeks.",
+    privateNotes: "First consultation. Patient is motivated to start LCHF. Introduced the diet plan, explained the homework sheet. Advised to reduce portion sizes gradually. Follow up in 2 weeks.",
+    patientNote:
+      "Hi Lily — lovely to meet you today. Your personalised LCHF plan is now in your app under Guide. Focus this fortnight on cutting rice, noodles, and sweet drinks; use the replacements list when you cook. Log your readings every morning. Any questions, message us on WhatsApp.",
+    patientNoteSentAt: "2026-03-14T10:45:00Z",
     createdAt: "2026-03-14T10:30:00Z",
     updatedAt: "2026-03-14T10:30:00Z"
   }
+];
+
+export const MOCK_GUIDE_VERSIONS: GuideVersion[] = MOCK_CONSULTATION_GUIDES.map((guide, idx) => {
+  const versions = [
+    { protocolName: "Initial LCHF Plan", clinicalRationale: "Patient ready to start eliminating carbs.", supersededAt: "2026-02-04T10:00:00Z" },
+    { protocolName: "Stricter LCHF", clinicalRationale: "Fasting blood sugar improved, tightening carb limit.", supersededAt: "2026-02-18T10:00:00Z" },
+    { protocolName: "LCHF + Replacements", clinicalRationale: "Weight down 1.5kg, adding safe replacements.", supersededAt: "2026-03-05T10:00:00Z" },
+    { protocolName: "LCHF Sustained", clinicalRationale: "Great progress, sustaining current macros.", supersededAt: "2026-03-25T10:00:00Z" },
+    { protocolName: "Full LCHF Plan", clinicalRationale: "Patient fully adapted, continuing long term.", supersededAt: null }
+  ];
+  return {
+    id: guide.id,
+    patientId: guide.patientId,
+    versionNumber: idx + 1,
+    protocolName: versions[idx].protocolName,
+    clinicalRationale: versions[idx].clinicalRationale,
+    introducedAtSession: idx + 1,
+    activeFrom: guide.updatedAt,
+    supersededAt: versions[idx].supersededAt,
+    noList: guide.noList,
+    yesCategories: guide.yesCategories,
+    snacks: guide.snacks,
+    replacements: guide.replacements,
+    portions: guide.portions,
+    cookingMethods: guide.cookingMethods,
+    additionalSections: guide.additionalSections,
+    createdAt: guide.updatedAt,
+    updatedAt: guide.updatedAt
+  };
+});
+
+export const MOCK_AVAILABILITY_WINDOWS: AvailabilityWindow[] = [
+  { id: "win-1", dayOfWeek: 1, startTime: "09:00", endTime: "12:00" },
+  { id: "win-2", dayOfWeek: 1, startTime: "14:00", endTime: "17:00" },
+  { id: "win-3", dayOfWeek: 2, startTime: "09:00", endTime: "12:00" },
+  { id: "win-4", dayOfWeek: 4, startTime: "10:00", endTime: "13:00" },
+  { id: "win-5", dayOfWeek: 5, startTime: "09:00", endTime: "12:00" }
+];
+
+export const MOCK_BLOCKED_SLOTS: BlockedSlot[] = [
+  { id: "blk-1", startsAt: "2026-04-02T14:00:00Z", endsAt: "2026-04-02T16:00:00Z", privateLabel: "Dental appointment", isAllDay: false },
+  { id: "blk-2", startsAt: "2026-04-15T00:00:00Z", endsAt: "2026-04-15T23:59:59Z", privateLabel: "Conference", isAllDay: true }
 ];
