@@ -73,7 +73,7 @@ export default function AppointmentPage() {
                     </p>
                     <p className="text-sm text-text-secondary font-medium mb-3">Need to get in touch?</p>
                     <Button variant="outline" size="patient" className="w-full" onClick={handleReschedule}>
-                      WhatsApp Dr. Jasmine's clinic →
+                      WhatsApp Dr. Jasmine&apos;s clinic →
                     </Button>
                   </>
                 )}

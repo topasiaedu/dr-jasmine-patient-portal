@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { AdminLayout } from "@/components/admin/AdminLayout";
@@ -22,10 +22,8 @@ import {
   ChevronDown,
   AlertTriangle,
   ArrowLeft,
-  PencilLine,
   Check,
   Save,
-  Send
 } from "lucide-react";
 import { toast } from "sonner";
 import { format, parseISO, isValid, addDays, startOfToday } from "date-fns";
@@ -223,7 +221,7 @@ export default function ConsultationPanel() {
   const isUnavailable = (date: Date, timeStr: string) => {
     const slotStart = new Date(date);
     const [time, modifier] = timeStr.split(" ");
-    let [h, m] = time.split(":");
+    const [h, m] = time.split(":");
     let hNum = parseInt(h);
     if (modifier === "PM" && hNum < 12) hNum += 12;
     if (modifier === "AM" && hNum === 12) hNum = 0;
@@ -241,7 +239,9 @@ export default function ConsultationPanel() {
         try {
           const { date: d, time: t } = JSON.parse(stored);
           if (format(date, "yyyy-MM-dd") === d && timeStr === t) return true;
-        } catch (e) {}
+        } catch {
+          // ignore malformed stored value
+        }
       }
     }
     return false;

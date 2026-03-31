@@ -138,9 +138,20 @@ export default function AdminGuideBuilder() {
     const newCat = { name: "New Category", items: [], notes: [] };
     setDraft(g => g ? { ...g, yesCategories: [...(g.yesCategories||[]), newCat] } : g);
   };
-  const updateYesCategory = (idx: number, field: string, val: string) => {
-    const newCats = [...(draft.yesCategories||[])];
-    newCats[idx] = { ...newCats[idx], [field]: val };
+  const updateYesCategory = (
+    idx: number,
+    field: "name" | "notes",
+    val: string | string[]
+  ) => {
+    const newCats = [...(draft.yesCategories || [])];
+    if (field === "notes") {
+      newCats[idx] = {
+        ...newCats[idx],
+        notes: Array.isArray(val) ? val : val.split("\n"),
+      };
+    } else {
+      newCats[idx] = { ...newCats[idx], name: typeof val === "string" ? val : val.join(" ") };
+    }
     setDraft(g => g ? { ...g, yesCategories: newCats } : g);
   };
   const removeYesCategory = (idx: number) => {
@@ -277,7 +288,7 @@ export default function AdminGuideBuilder() {
                   <Textarea
                     placeholder="Category notes (optional)"
                     value={cat.notes ? cat.notes.join('\n') : ""}
-                    onChange={e => updateYesCategory(catIdx, "notes", e.target.value.split('\n') as any)}
+                    onChange={e => updateYesCategory(catIdx, "notes", e.target.value.split("\n"))}
                     className="h-16 text-sm mb-3 resize-none"
                   />
 

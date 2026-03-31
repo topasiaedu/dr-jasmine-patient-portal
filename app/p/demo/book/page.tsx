@@ -65,7 +65,7 @@ export default function BookPage() {
   const isUnavailable = (date: Date, timeStr: string) => {
     const slotStart = new Date(date);
     const [time, modifier] = timeStr.split(" ");
-    let [h, m] = time.split(":");
+    const [h, m] = time.split(":");
     let hNum = parseInt(h);
     if (modifier === "PM" && hNum < 12) hNum += 12;
     if (modifier === "AM" && hNum === 12) hNum = 0;
@@ -83,7 +83,9 @@ export default function BookPage() {
         try {
           const { date: d, time: t } = JSON.parse(stored);
           if (format(date, "yyyy-MM-dd") === d && timeStr === t) return true;
-        } catch (e) {}
+        } catch {
+          // ignore malformed stored value
+        }
       }
     }
     return false;

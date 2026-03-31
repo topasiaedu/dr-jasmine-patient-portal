@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { MotionStagger } from "@/components/motion/MotionStagger";
 import { MotionItem } from "@/components/motion/MotionItem";
 import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
 
 const MOTIVATIONAL_QUOTES: { text: string; author: string }[] = [
   { text: "Take care of your body. It's the only place you have to live.", author: "Jim Rohn" },

@@ -17,6 +17,7 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
+import type { DateSelectArg, EventClickArg, EventInput } from "@fullcalendar/core";
 
 type CalendarEvent = {
   id?: string;
@@ -164,7 +165,7 @@ export default function SchedulePage() {
     );
   }
 
-  const handleSelect = (info: any) => {
+  const handleSelect = (info: DateSelectArg) => {
     setBlockModalSelection({ start: info.startStr, end: info.endStr });
     setBlockModalAllDay(info.allDay);
     setBlockModalLabel("");
@@ -187,14 +188,14 @@ export default function SchedulePage() {
     toast.success("Time blocked successfully.");
   };
 
-  const handleEventClick = (info: any) => {
-    const props = info.event.extendedProps;
+  const handleEventClick = (info: EventClickArg) => {
+    const props = info.event.extendedProps as CalendarEvent["extendedProps"];
     const evt: CalendarEvent = {
-        id: info.event.id,
-        title: info.event.title,
-        start: info.event.startStr,
-        end: info.event.endStr,
-        extendedProps: props
+      id: info.event.id,
+      title: info.event.title,
+      start: info.event.startStr,
+      end: info.event.endStr,
+      extendedProps: props,
     };
     setSelectedEvent(evt);
 
@@ -236,9 +237,9 @@ export default function SchedulePage() {
     { name: "Saturday", index: 6 },
   ];
 
-  const updateWindow = (idx: number, field: string, value: string) => {
+  const updateWindow = (idx: number, field: "startTime" | "endTime", value: string) => {
     const w = [...editingWindows];
-    (w[idx] as any)[field] = value;
+    w[idx] = { ...w[idx], [field]: value };
     setEditingWindows(w);
   };
 
@@ -273,7 +274,7 @@ export default function SchedulePage() {
             selectMirror={true}
             eventClick={handleEventClick}
             select={handleSelect}
-            events={computedEvents as any}
+            events={computedEvents as EventInput[]}
             height="auto"
           />
         </div>

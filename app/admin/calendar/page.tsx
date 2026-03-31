@@ -16,10 +16,22 @@ import {
 import { parseISO, format } from "date-fns";
 import { useRouter } from "next/navigation";
 
+type CalendarEventInput = {
+  id?: string;
+  title?: string;
+  start?: string | Date;
+  end?: string | Date;
+  display?: string;
+  color?: string;
+  backgroundColor?: string;
+  borderColor?: string;
+  textColor?: string;
+};
+
 export default function AdminCalendarPage() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
-  const [events, setEvents] = useState<any[]>([]);
+  const [events, setEvents] = useState<CalendarEventInput[]>([]);
 
   useEffect(() => {
     setMounted(true);
@@ -31,7 +43,7 @@ export default function AdminCalendarPage() {
       color: "#D1C8C0", // Slightly darker grey for blocked
     }));
 
-    const activeApptEvents: any[] = [
+    const activeApptEvents: CalendarEventInput[] = [
       {
         id: "mock1",
         title: `Session ${MOCK_APPOINTMENT.sessionNumber}: ${MOCK_PATIENT.fullName}`,
@@ -46,7 +58,7 @@ export default function AdminCalendarPage() {
     function parseDateAndTime(dateStr: string, timeStr: string) {
       const d = parseISO(dateStr);
       const [time, modifier] = timeStr.split(" ");
-      let [h, m] = time.split(":");
+      const [h, m] = time.split(":");
       let hNum = parseInt(h);
       if (modifier === "PM" && hNum < 12) hNum += 12;
       if (modifier === "AM" && hNum === 12) hNum = 0;
@@ -69,7 +81,9 @@ export default function AdminCalendarPage() {
           borderColor: "#B8860B",
           textColor: "#ffffff",
         });
-      } catch (e) {}
+      } catch {
+        // ignore malformed localStorage entry
+      }
     }
 
     const demoNextAppt = localStorage.getItem("demo_next_appointment");
@@ -88,7 +102,9 @@ export default function AdminCalendarPage() {
           borderColor: "#128C7E",
           textColor: "#ffffff",
         });
-      } catch (e) {}
+      } catch {
+        // ignore malformed localStorage entry
+      }
     }
 
     setEvents([...blockedEvents, ...activeApptEvents]);
