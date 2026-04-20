@@ -1,34 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import {
-  Home,
-  ClipboardList,
-  Calendar,
-  BookOpen,
-  HelpCircle,
-} from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { PatientNavTab } from "@/lib/types/patient-nav";
 
 interface PatientTopNavProps {
   activePath: string;
+  tabs: PatientNavTab[];
 }
-
-/** Tab configuration — mirrors BottomNav for consistency. */
-const TABS = [
-  { label: "Home", href: "/p/demo/home", icon: Home },
-  { label: "Log", href: "/p/demo/log", icon: ClipboardList },
-  { label: "Appointment", href: "/p/demo/appointment", icon: Calendar },
-  { label: "Guide", href: "/p/demo/guide", icon: BookOpen },
-  { label: "Help", href: "/p/demo/faq", icon: HelpCircle },
-];
 
 /**
  * Desktop-only top navigation bar with Dr. Jasmine brand on the left
  * and horizontal nav tabs on the right. Hidden on mobile (md:flex).
- * Matches the patient portal warm-ivory / forest-green design language.
  */
-export function PatientTopNav({ activePath }: PatientTopNavProps) {
+export function PatientTopNav({ activePath, tabs }: PatientTopNavProps) {
   return (
     <header
       className="hidden md:flex items-center justify-between px-8 h-16 sticky top-0 z-40 border-b border-depth"
@@ -38,7 +23,6 @@ export function PatientTopNav({ activePath }: PatientTopNavProps) {
         WebkitBackdropFilter: "blur(20px) saturate(180%)",
       }}
     >
-      {/* Brand block — Dr. Jasmine in display font + METANOVA HEALTH sub-label */}
       <div className="flex flex-col justify-center leading-none select-none">
         <span
           className="text-[20px] text-primary leading-none"
@@ -51,9 +35,8 @@ export function PatientTopNav({ activePath }: PatientTopNavProps) {
         </span>
       </div>
 
-      {/* Navigation tabs */}
       <nav aria-label="Top Navigation" className="flex items-center gap-1">
-        {TABS.map((tab) => {
+        {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activePath.startsWith(tab.href);
 

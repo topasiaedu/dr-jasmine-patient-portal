@@ -63,10 +63,6 @@ export default function SchedulePage() {
 
   useEffect(() => {
     setMounted(true);
-    if (!localStorage.getItem("admin_auth")) {
-      router.replace("/admin/login");
-      return;
-    }
 
     // Load Availability
     const savedAvail = localStorage.getItem("admin_availability_windows");
@@ -103,7 +99,7 @@ export default function SchedulePage() {
       }
     }
     setAppointments(apptsList);
-  }, [router]);
+  }, []);
 
   const computedEvents = useMemo(() => {
     const events: CalendarEvent[] = [];

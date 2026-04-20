@@ -32,6 +32,14 @@ interface Patient {
   email: string;
   /** Primary phone number — sourced from GHL contact record (E.164 format) */
   phone: string;
+  /**
+   * Optional **staff-only** note (Dr. Jasmine / team): agreed logging frequency or
+   * internal reminders (e.g. "Twice weekly", "Every other day"). Used in admin and for
+   * future cadence-aware automations — **not** shown verbatim to patients unless product
+   * adds a separate patient-facing field later. Patient UI uses standard empathetic copy
+   * from the app, not this field.
+   */
+  readingCadenceNote?: string;
   /** Current lifecycle status */
   status: PatientStatus;
   /** ISO 8601 datetime when the patient record was created (link was generated) */
@@ -316,15 +324,16 @@ create extension if not exists "pgcrypto";
 
 -- PATIENTS
 create table patients (
-  id                uuid primary key default gen_random_uuid(),
-  ghl_contact_id    text not null unique,
-  full_name         text not null,
-  email             text not null,
-  phone             text not null,
-  status            text not null default 'onboarding'
-                    check (status in ('onboarding', 'booked', 'active')),
-  created_at        timestamptz not null default now(),
-  updated_at        timestamptz not null default now()
+  id                    uuid primary key default gen_random_uuid(),
+  ghl_contact_id        text not null unique,
+  full_name             text not null,
+  email                 text not null,
+  phone                 text not null,
+  reading_cadence_note  text,  -- staff-only; see Patient type JSDoc
+  status                text not null default 'onboarding'
+                        check (status in ('onboarding', 'booked', 'active')),
+  created_at            timestamptz not null default now(),
+  updated_at            timestamptz not null default now()
 );
 
 -- ONBOARDING RESPONSES

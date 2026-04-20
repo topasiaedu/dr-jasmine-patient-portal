@@ -9,8 +9,26 @@ contract — what data goes in, what comes out, and which side owns the action.
 |---|---|---|
 | **Cal.com** | Appointment booking + Zoom meeting creation | Cal.com → our webhook |
 | **Zoom** | Video consultations | Managed by Cal.com; we store the join URL |
-| **GoHighLevel (GHL)** | CRM, WhatsApp/email reminders, contact management | We call GHL API |
+| **GoHighLevel (GHL)** | CRM, WhatsApp/email, **first intake + booking**, contact management | We call GHL API; GHL runs automations |
 | **OpenAI GPT-4o Vision** | Extract health readings from a photo | We call OpenAI API |
+
+**Phasing:** **Phase 1** uses GHL heavily (calendar + form + post-consult email with
+portal link; see `09-build-phases.md`). **Cal.com + Zoom** are primary in **Phase 2**
+when booking moves into this app.
+
+---
+
+## 0. Launch sequence — GHL before in-app booking
+
+Until **Phase 2**, the practice may use **GHL** alone for:
+
+- Sending a **calendar link** where the patient completes a **form** and **books** the first session
+- Sending the **portal link** (`/p/<ghlContactId>`) by **email** via a **GHL automation**
+  (**1 hour after the scheduled appointment start time** — exact offset is configured in GHL)
+
+The **Next.js app** still implements the **magic-link cookie model** (`03-authentication.md`)
+and persists guides/readings in **Supabase**. **GHL** remains the system of record for
+CRM fields collected in that external flow until **Phase 3** sync or in-app onboarding priorities apply.
 
 ---
 
@@ -163,6 +181,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       patientEmail,
     });
 
+    // Optional: enroll in GHL when product wires WhatsApp/email for **in-app** bookings
+    // (typically Phase 3; Phase 2 can ship with DB + UI only — see `09-build-phases.md`)
     await enrollInGhlWorkflow({
       patientEmail,
       workflowId: process.env.GHL_WORKFLOW_BOOKING_CONFIRMED ?? "",
@@ -213,14 +233,36 @@ doctor-patient pair, the free tier is sufficient.
 
 ## 3. GoHighLevel (GHL)
 
-### Authentication
+### API version — v2 only
 
-GHL uses an API key per location. Store as `GHL_API_KEY` and `GHL_LOCATION_ID`
-environment variables. All GHL API calls go to:
+This project targets **HighLevel API 2.0** (v1 / `rest.gohighlevel.com` is end-of-support).
+Use the official reference: [HighLevel API documentation](https://marketplace.gohighlevel.com/docs/).
 
-```
-https://rest.gohighlevel.com/v1/
-```
+Typical server-to-server setup for a single location:
+
+- **Base URL:** `https://services.leadconnectorhq.com`
+- **Auth:** Private Integration token (or OAuth access token for marketplace apps), sent as
+  `Authorization: Bearer <token>`
+- **Version header:** send the API version date header required by your endpoints (see docs;
+  e.g. `Version: 2021-07-28` is common)
+
+Store tokens and **location id** in environment variables (exact names TBD in `.env.example`;
+never expose Private Integration tokens to the browser).
+
+### Operational rules (Phase 1) — confirmed
+
+- **No app-triggered GHL messaging in Phase 1:** the Next.js app **does not** send patient
+  emails through GHL or **enroll contacts into GHL workflows** via API. Those emails and
+  automations run **only inside GHL**. The app may still call API v2 for **contacts**
+  (create/update, search-by-email for find-my-link, read for lazy provisioning).
+- **Calendar booking** in GHL **creates a contact when one does not exist**, so the practice
+  always has a **`contactId`** to put in `/p/<ghlContactId>` links.
+- **Admin “new patient”** in this app should still **create (or upsert) the contact via API v2**
+  when that path is used, so Supabase and GHL stay aligned.
+- **Email templates, delays, no-shows, and legal/T&C** for the GHL-side journey are **configured
+  in GHL** by the practice — no requirement to expose production hostname flows in this repo
+  beyond keeping **`NEXT_PUBLIC_APP_URL`** (or equivalent) **identical** to the **origin used
+  inside GHL email links** so redirects, cookies, and magic-link paths match.
 
 ### Contact Management
 
@@ -254,83 +296,61 @@ interface GhlUpdateContactPayload {
 }
 ```
 
-### Workflow Enrollment
+### Workflow enrollment (API v2)
 
-To trigger a reminder or notification, the backend adds the GHL contact to a workflow:
+Triggering workflows / campaigns is done through **API v2** endpoints documented on the
+developer portal (paths differ from legacy v1). Implement `enrollInGhlWorkflow` (or
+equivalent) by following the current **“Add contact to workflow / campaign”** (or successor)
+operation in the official docs — do not use `rest.gohighlevel.com/v1/...` URLs.
 
 ```typescript
-// lib/integrations/ghl.ts
+// lib/integrations/ghl.ts — shape only; use marketplace docs for exact URL + body.
 
 interface EnrollInWorkflowParams {
   /** GHL contact ID */
   contactId: string;
-  /** GHL workflow ID from environment variables */
+  /** Workflow / campaign identifier from GHL or env */
   workflowId: string;
-  /**
-   * Optional custom data to inject into the workflow.
-   * These map to GHL custom fields or trigger variables.
-   */
+  /** Optional merge fields for the workflow */
   customData?: Record<string, string>;
 }
 
-async function enrollInGhlWorkflow(params: EnrollInWorkflowParams): Promise<void> {
-  const response = await fetch(
-    `https://rest.gohighlevel.com/v1/contacts/${params.contactId}/workflow/${params.workflowId}`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.GHL_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ eventStartTime: new Date().toISOString() }),
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error(`GHL workflow enrollment failed: ${response.status}`);
-  }
-}
+// async function enrollInGhlWorkflow(params: EnrollInWorkflowParams): Promise<void> {
+//   // POST to the API v2 workflow / campaign enrollment endpoint — see marketplace docs.
+// }
 ```
 
 ### GHL Workflows to Build
 
-The following workflows must be configured in GHL. Each is triggered by the app
-via the enrollment API above.
+The following workflows are **examples** of what is configured in GHL. **Phase 1**
+requires at least the **post-consultation portal link** email; booking-confirmed and
+reminder rows below align with **in-app Cal.com** bookings (**Phase 2–3**) when the app
+enrolls contacts via the API.
 
-| Workflow ID env var | Trigger | Actions |
+| Workflow / automation (example env var) | When | Actions (examples) |
 |---|---|---|
-| `GHL_WORKFLOW_BOOKING_CONFIRMED` | Booking created | Immediate WhatsApp: "Your appointment is confirmed for [date]. Join here: [Zoom link]" |
-| `GHL_WORKFLOW_REMINDER_24H` | 24h before appointment | WhatsApp: "Reminder: your consultation is tomorrow at [time]. Join here: [Zoom link]" |
-| `GHL_WORKFLOW_REMINDER_1H` | 1h before appointment | WhatsApp: "Your consultation starts in 1 hour. Join here: [Zoom link]" |
-| `GHL_WORKFLOW_PATIENT_ACTIVATED` | Patient activated | WhatsApp: "Your portal is now active. Tap here to log your first readings: [link]" |
-| `GHL_WORKFLOW_READING_REMINDER` | Daily at configured time | WhatsApp: "Hi [name], have you logged your readings today? [portal link]" |
-| `GHL_WORKFLOW_WELCOME` | New patient link generated | WhatsApp: "Welcome to Dr. Jasmine's portal. Tap here to get started: [link]" |
-| `GHL_WORKFLOW_SEND_MY_LINK` | Patient requests link recovery | WhatsApp: "Here is your portal link: [link]" |
+| _(GHL studio — Phase 1)_ | **1h after appointment start** (delay set in GHL) | **Email** with portal URL `/p/<ghlContactId>` |
+| `GHL_WORKFLOW_BOOKING_CONFIRMED` | In-app Cal booking created (Phase 2+) | WhatsApp/email: confirmed, Zoom link if available |
+| `GHL_WORKFLOW_REMINDER_24H` | 24h before appointment | Reminder with join link |
+| `GHL_WORKFLOW_REMINDER_1H` | 1h before appointment | Reminder with join link |
+| `GHL_WORKFLOW_PATIENT_ACTIVATED` | Patient activated (Phase 3) | "Portal unlocked" style message with link |
+| `GHL_WORKFLOW_READING_REMINDER` | Per cadence (Phase 3) | Reminder text respects **patient reading plan**, not assumed daily |
+| `GHL_WORKFLOW_WELCOME` | Optional | Welcome / get-started messaging |
+| `GHL_WORKFLOW_SEND_MY_LINK` | Patient requests link recovery | Sends portal link |
 
-**Note:** The 24h and 1h reminder workflows are time-based. GHL supports "Wait until"
-steps that delay actions relative to a trigger time. When enrolling a contact in these
-workflows, pass the appointment `startTime` as the reference time.
+**Note:** Time-based reminders use GHL "Wait until" (or equivalent) relative to the
+appointment `startTime` when the trigger comes from **Cal.com webhooks** in later phases.
 
-### Looking Up a Contact by Email
+### Looking up a contact by email (API v2)
 
-Used in the "find my link" recovery flow:
+Used in the **find-my-link** recovery flow. Implement using the **Contacts search / lookup**
+operation from [HighLevel API documentation](https://marketplace.gohighlevel.com/docs/)
+(v2 paths and query params differ from legacy v1).
 
 ```typescript
-async function findGhlContactByEmail(email: string): Promise<string | null> {
-  const response = await fetch(
-    `https://rest.gohighlevel.com/v1/contacts/search?email=${encodeURIComponent(email)}&locationId=${process.env.GHL_LOCATION_ID}`,
-    {
-      headers: { Authorization: `Bearer ${process.env.GHL_API_KEY}` },
-    }
-  );
-
-  if (!response.ok) {
-    return null;
-  }
-
-  const data = await response.json() as { contacts: Array<{ id: string }> };
-  return data.contacts[0]?.id ?? null;
-}
+// async function findGhlContactByEmail(email: string): Promise<string | null> {
+//   // Call API v2 contacts search — return first matching contact id or null.
+// }
 ```
 
 ---

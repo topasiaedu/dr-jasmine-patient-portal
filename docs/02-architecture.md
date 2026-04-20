@@ -168,7 +168,7 @@ Dr. Jasmine activates patient → PATCH /api/admin/patients/<id>/activate
 /p/[ghlContactId]/book               → Cal.com booking embed (status: onboarding, after form)
 /p/[ghlContactId]/pending            → holding screen (status: booked)
 /p/[ghlContactId]/home               → home dashboard (status: active)
-/p/[ghlContactId]/log                → daily readings (status: active)
+/p/[ghlContactId]/log                → health readings (status: active; cadence per patient)
 /p/[ghlContactId]/appointment        → upcoming appointment + join button (status: active)
 /p/[ghlContactId]/guide              → personalised guide + PDF export (status: active)
 /p/[ghlContactId]/faq                → FAQ (status: active)
@@ -192,7 +192,7 @@ Dr. Jasmine activates patient → PATCH /api/admin/patients/<id>/activate
 
 ```
 POST   /api/onboarding                      → submit onboarding form
-POST   /api/readings                        → submit daily readings
+POST   /api/readings                        → submit one dated reading set (fields per `04-data-models.md`)
 POST   /api/extract-image                   → OpenAI photo extraction
 POST   /api/webhooks/cal                    → Cal.com booking webhook
 GET    /api/admin/patients                  → list patients
@@ -216,14 +216,16 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=        # server-side only, never exposed to client
 
-# GoHighLevel
-GHL_API_KEY=
+# GoHighLevel (API v2 — Private Integration or OAuth token; see `07-integrations.md`)
+GHL_API_KEY=                       # Bearer token (Private Integration recommended for single-location)
 GHL_LOCATION_ID=
 GHL_WORKFLOW_BOOKING_CONFIRMED=   # workflow ID for booking confirmation
 GHL_WORKFLOW_REMINDER_24H=        # workflow ID for 24h reminder
 GHL_WORKFLOW_REMINDER_1H=         # workflow ID for 1h reminder
 GHL_WORKFLOW_PATIENT_ACTIVATED=   # workflow ID for activation message
-GHL_WORKFLOW_READING_REMINDER=    # workflow ID for daily reading nudge
+GHL_WORKFLOW_READING_REMINDER=    # optional; cadence-aware nudge (Phase 3 — not assumed daily)
+# GHL post-consult portal email is often a **pure GHL automation** (no env var) in Phase 1;
+# add an ID here if the app enrolls contacts into that workflow via API.
 
 # Cal.com
 CAL_API_KEY=

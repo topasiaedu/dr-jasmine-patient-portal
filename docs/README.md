@@ -18,7 +18,7 @@ refer to these docs before making implementation decisions.
 | 06 | [Admin Panel](./06-admin-panel.md) | Dr. Jasmine's panel, consultation panel, guide builder, patient journey |
 | 07 | [Integrations](./07-integrations.md) | Cal.com, Zoom, GHL API, OpenAI Vision — contracts and flow |
 | 08 | [UI / UX Design System](./08-ui-ux.md) | **Complete design system** — colours, typography, components, accessibility, animations |
-| 09 | [Build Phases](./09-build-phases.md) | Phased development plan with scope per phase |
+| 09 | [Build Phases](./09-build-phases.md) | Phased plan: **Phase 1** GHL + guide + readings; **Phase 2** in-app Cal + Zoom; **Phase 3** gating + messaging alignment |
 | 10 | [UX Audit & Improvements](./10-ux-audit-improvements.md) | Full audit findings, scores, improvement tracker |
 | 11 | [Implementation Prompts (Legacy)](./11-implementation-prompts.md) | Original 6 prompts for functional fixes — **mostly completed** |
 | 12 | [Design Implementation Prompts (Legacy)](./12-design-implementation-prompts.md) | **Superseded** — old 8 prompts for teal+gold overhaul, no longer current |

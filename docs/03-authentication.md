@@ -36,8 +36,11 @@ Where `<ghlContactId>` is the patient's GoHighLevel contact ID. This ID is:
 - A GHL-format ID (e.g. `abc123XYZ...`) — long enough to be functionally unguessable
 - The single source of patient identity across GHL and the portal
 
-This URL is sent to the patient via GHL as a WhatsApp message or email. It lives permanently
-in their WhatsApp chat history — they can always find it by scrolling back.
+This URL is sent to the patient via GHL (e.g. **email** or WhatsApp). In the **Phase 1**
+launch path, the usual sequence is: intake + first booking happen in **GHL**; **1 hour
+after the scheduled appointment start time** a **GHL automation** emails the portal link
+(so it lands after the consult for typical slot lengths; exact offset is configured in GHL).
+The link can also be resent manually or via **find-my-link** later.
 
 ### Cookie Session
 
@@ -85,7 +88,7 @@ GHL — if they can receive WhatsApp messages, they can get back in.
 ### What Can Be Done With a Stolen Link
 
 In the worst case, someone who obtains a patient's link can:
-- Submit daily readings on their behalf (incorrect data, but not malicious data exfiltration)
+- Submit readings on their behalf (incorrect data, but not malicious data exfiltration)
 - View their personalised dietary guide
 - View their upcoming appointment details (date/time, not Zoom link — that is only shown
   on the appointment page when the session is active)

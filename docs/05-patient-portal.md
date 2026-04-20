@@ -6,6 +6,33 @@ The patient portal is the patient-facing side of the application. It lives under
 route `/p/[ghlContactId]/*`. All pages are mobile-first and designed for elderly or
 low-tech-savvy users. Every screen has exactly one primary action.
 
+### Launch note — GHL-first intake (Phase 1)
+
+For **Phase 1**, the **first** pre-consultation intake and **first** appointment booking
+may happen entirely in **GoHighLevel** (calendar link + GHL form). The patient receives
+the **portal link** by **GHL email** after the first consultation (see `09-build-phases.md`).
+The route map below describes the **full product**; some routes are **deferred** until
+later phases when onboarding and in-app booking go live.
+
+### Reading cadence (not always daily)
+
+**Confirmed with Dr. Jasmine:** not every patient is expected to log readings **daily**.
+Some patients log **every other day**, **twice a week**, or on another schedule **agreed
+individually**.
+
+**Two different things (do not confuse them):**
+
+| What | Who it is for | Where it lives |
+| --- | --- | --- |
+| **`readingCadenceNote`** (on the patient record) | **Dr. Jasmine and staff only** — “what we agreed with this patient” (frequency, internal cues). | `patients.reading_cadence_note` / `Patient.readingCadenceNote` in `04-data-models.md` |
+| **Patient-facing wording** on Log / Home | **The patient** — warm, clear, **non-guilt** language that does not assume a daily habit unless that patient is on a daily plan. | Product copy / i18n strings in the UI (not the staff note field). |
+
+The app should:
+
+- Avoid patient copy that assumes “every day” unless that patient is actually on a daily plan
+- Treat **reminders** (when added) as **cadence-aware** in `09-build-phases.md` Phase 3,
+  not as a single global daily ping for everyone
+
 ---
 
 ## Route Map and Status Gates
@@ -17,7 +44,7 @@ low-tech-savvy users. Every screen has exactly one primary action.
 | `/p/[id]/book` | `onboarding` (after form) | Cal.com booking embed |
 | `/p/[id]/pending` | `booked` | Holding screen |
 | `/p/[id]/home` | `active` | Dashboard |
-| `/p/[id]/log` | `active` | Daily readings entry |
+| `/p/[id]/log` | `active` | Health readings entry (cadence is per patient) |
 | `/p/[id]/appointment` | `active` | Upcoming appointment + Join button |
 | `/p/[id]/guide` | `active` | Personalised dietary guide |
 | `/p/[id]/faq` | `active` | Frequently asked questions |
@@ -40,6 +67,10 @@ No UI. Pure logic:
 
 **Purpose:** Collect the patient's personal, medical, and lifestyle background before
 their first consultation. Dr. Jasmine references these answers during the consultation.
+
+**Phase 1:** The same information may already be captured in a **GHL form** before the
+patient receives the portal link. This in-app form remains the **canonical UX** for when
+the full journey runs inside the app (see `09-build-phases.md` Phase 3).
 
 **Source:** This form combines Dr. Jasmine's official intake form (administrative fields)
 with medical/lifestyle fields needed for the admin consultation panel.
@@ -170,7 +201,8 @@ This prevents patients from accidentally joining at the wrong time.
 
 ### Home `/p/[id]/home`
 
-**Purpose:** Greet the patient and surface the one most relevant action for today.
+**Purpose:** Greet the patient and surface the most relevant **next action** (copy should
+respect **reading cadence** — not everyone is on a daily plan).
 
 **Layout:**
 ```
@@ -178,17 +210,18 @@ Good morning,                     ← Plus Jakarta Sans, secondary colour
 Lily                              ← DM Serif Display, large, primary colour
 
 ┌─────────────────────────────────┐
-│  TODAY'S TASK                   │
+│  YOUR READINGS                  │
 │                                 │
-│  Have you logged your           │
-│  readings today?                │
+│  Ready to log your readings?    │
+│  (Follow the plan you agreed    │
+│   with Dr. Jasmine.)            │
 │                                 │
 │  [Log my readings →]            │
 └─────────────────────────────────┘
 
-(if readings already submitted today, card becomes:)
+(if readings already logged for the relevant date / period per product rules:)
 ┌─────────────────────────────────┐
-│  ✓  All done for today!         │
+│  ✓  You're up to date           │
 │     Great work, Lily.           │
 └─────────────────────────────────┘
 
@@ -206,9 +239,12 @@ The single task card is the entire value proposition of this screen.
 
 ---
 
-### Daily Readings `/p/[id]/log`
+### Health readings `/p/[id]/log`
 
-**Purpose:** Submit the 7 daily health readings.
+**Purpose:** Submit the **seven numeric fields** for a given date (fasting glucose,
+post-dinner glucose, BP, pulse, weight, waistline — see data model). **How often** the
+patient should submit is **clinical** — daily, every other day, twice weekly, etc. —
+not hard-coded by the app.
 
 **UX pattern:** Stepped form, one field per screen. Patient cannot see all 7 fields
 at once — this is intentional to prevent overwhelm.
@@ -281,8 +317,8 @@ Final screen — Review & Submit
 - Returns to home after 3 seconds or on tap
 
 **Duplicate handling:**
-If a reading for today already exists, show a message:
-> "You've already logged today's readings. Would you like to update them?"
+If a reading for the **selected date** already exists, show a message:
+> "You've already logged readings for this date. Would you like to update them?"
 > [Yes, update] [No, keep the original]
 
 ---

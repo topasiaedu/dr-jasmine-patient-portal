@@ -1,11 +1,30 @@
+import {
+  BookOpen,
+  Calendar,
+  ClipboardList,
+  HelpCircle,
+  Home,
+} from "lucide-react";
 import { BottomNav } from "./BottomNav";
 import { PatientTopNav } from "./PatientTopNav";
 import { DemoControls } from "../demo/DemoControls";
 import { MotionStagger } from "@/components/motion/MotionStagger";
+import type { PatientNavTab } from "@/lib/types/patient-nav";
+
+const DEMO_NAV_TABS: PatientNavTab[] = [
+  { label: "Home", href: "/p/demo/home", icon: Home },
+  { label: "Log", href: "/p/demo/log", icon: ClipboardList },
+  { label: "Appointment", href: "/p/demo/appointment", icon: Calendar },
+  { label: "Guide", href: "/p/demo/guide", icon: BookOpen },
+  { label: "Help", href: "/p/demo/faq", icon: HelpCircle },
+];
 
 interface PatientPageLayoutProps {
   children: React.ReactNode;
   activePath: string;
+  /** When omitted, legacy `/p/demo/*` tabs are used. */
+  tabs?: PatientNavTab[];
+  showDemoControls?: boolean;
 }
 
 /**
@@ -16,6 +35,8 @@ interface PatientPageLayoutProps {
 export function PatientPageLayout({
   children,
   activePath,
+  tabs = DEMO_NAV_TABS,
+  showDemoControls = true,
 }: PatientPageLayoutProps) {
   return (
     <div className="min-h-screen bg-[#FAF8F5]">
@@ -26,10 +47,8 @@ export function PatientPageLayout({
         Skip to main content
       </a>
 
-      {/* Desktop top nav — includes brand + tabs, hidden on mobile */}
-      <PatientTopNav activePath={activePath} />
+      <PatientTopNav activePath={activePath} tabs={tabs} />
 
-      {/* Mobile brand strip — visible only on mobile (hidden on md+) */}
       <div
         className="md:hidden flex items-center px-6 h-14 sticky top-0 z-40 border-b border-depth"
         style={{
@@ -51,17 +70,10 @@ export function PatientPageLayout({
         </div>
       </div>
 
-      {/*
-        Main content area:
-        - Mobile: narrow (max-w-md), bottom padding for BottomNav (92px) + top brand strip (56px)
-        - Desktop: wider (max-w-5xl), standard bottom padding, no extra top padding needed
-          because PatientTopNav is sticky and flows in document order
-      */}
       <main
         id="main-content"
         className="relative mx-auto min-h-[calc(100vh-56px)] max-w-md md:max-w-5xl bg-[#FAF8F5] pb-[92px] md:pb-10 md:min-h-[calc(100vh-64px)]"
       >
-        {/* Subtle tinted header zone gradient */}
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-x-0 top-0 h-52 bg-gradient-to-b from-[#EEF5F1] to-transparent"
@@ -69,10 +81,9 @@ export function PatientPageLayout({
         <MotionStagger className="relative z-10">{children}</MotionStagger>
       </main>
 
-      <DemoControls />
+      {showDemoControls ? <DemoControls /> : null}
 
-      {/* Bottom nav — visible on mobile only */}
-      <BottomNav activePath={activePath} />
+      <BottomNav activePath={activePath} tabs={tabs} />
     </div>
   );
 }

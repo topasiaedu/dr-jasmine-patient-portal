@@ -1,34 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import {
-  Home,
-  ClipboardList,
-  Calendar,
-  BookOpen,
-  HelpCircle,
-} from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import type { PatientNavTab } from "@/lib/types/patient-nav";
 
 interface BottomNavProps {
   activePath: string;
+  tabs: PatientNavTab[];
 }
-
-/** Tab configuration for the patient bottom navigation. */
-const TABS = [
-  { label: "Home", href: "/p/demo/home", icon: Home },
-  { label: "Log", href: "/p/demo/log", icon: ClipboardList },
-  { label: "Appointment", href: "/p/demo/appointment", icon: Calendar },
-  { label: "Guide", href: "/p/demo/guide", icon: BookOpen },
-  { label: "Help", href: "/p/demo/faq", icon: HelpCircle },
-];
 
 /**
  * Patient bottom navigation bar with frosted glass effect.
  * Active tab is highlighted with a forest-tinted animated pill.
  */
-export function BottomNav({ activePath }: BottomNavProps) {
+export function BottomNav({ activePath, tabs }: BottomNavProps) {
   return (
     <nav
       aria-label="Bottom Navigation"
@@ -40,7 +26,7 @@ export function BottomNav({ activePath }: BottomNavProps) {
         paddingBottom: "env(safe-area-inset-bottom, 0px)",
       }}
     >
-      {TABS.map((tab) => {
+      {tabs.map((tab) => {
         const Icon = tab.icon;
         const isActive = activePath.startsWith(tab.href);
 
