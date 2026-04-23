@@ -337,17 +337,6 @@ export default function AdminGuideBuilder() {
     newCats[catIdx].items = newCats[catIdx].items.filter((_, i) => i !== itemIdx);
     setDraft(g => g ? { ...g, yesCategories: newCats } : g);
   };
-  const moveYesCategory = (idx: number, direction: -1 | 1) => {
-    if (!draft) return;
-    const newCats = [...(draft.yesCategories||[])];
-    const targetIdx = idx + direction;
-    if (targetIdx >= 0 && targetIdx < newCats.length) {
-      const temp = newCats[idx];
-      newCats[idx] = newCats[targetIdx];
-      newCats[targetIdx] = temp;
-      setDraft(g => g ? { ...g, yesCategories: newCats } : g);
-    }
-  };
 
   return (
     <AdminLayout>
