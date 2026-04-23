@@ -302,9 +302,11 @@ export default function LoggingPage() {
 
         <div className="px-6 pt-8 pb-6 flex-1 flex flex-col">
           <h1 className="text-[28px] font-display text-main mb-2">How would you like to log your readings today?</h1>
-          <p className="text-text-secondary text-sm mb-12">Choose manual entry, or snap a photo of your paper logbook to auto-fill your numbers.</p>
+          <p className="text-text-secondary text-sm mb-12">Log your readings manually below.</p>
 
           <div className="space-y-4">
+            {/* Photo scan hidden until tested — re-enable by removing the false && wrapper */}
+            {false && (
             <div
               className={`rounded-2xl border p-6 transition-all ${
                 method === "photo"
@@ -338,6 +340,7 @@ export default function LoggingPage() {
                 </div>
               </button>
             </div>
+            )}
             <div
               className={`rounded-2xl border p-6 transition-all ${
                 method === "manual"
